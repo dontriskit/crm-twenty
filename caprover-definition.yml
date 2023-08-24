@@ -1,0 +1,44 @@
+captainVersion: 4
+services:
+    '$$cap_appname-front':
+        image: twenty-front:latest
+        build:
+            context: .
+            dockerfile: ./infra/prod/front/Dockerfile
+            args:
+                REACT_APP_SERVER_BASE_URL: '$$cap_server_base_url'
+        caproverExtra:
+            containerHttpPort: '3000' # Assuming the front-end runs on port 3000
+
+    '$$cap_appname-server':
+        image: twenty-server:latest
+        environment:
+            # List of environment variables required by the server
+        build:
+            context: .
+            dockerfile: ./infra/prod/server/Dockerfile
+        caproverExtra:
+            containerHttpPort: '8080' # Assuming the server runs on port 8080
+
+caproverOneClickApp:
+    variables:
+        - id: '$$cap_server_base_url'
+          label: Server Base URL
+          defaultValue: 'http://localhost:8080'
+          description: Base URL for the Twenty server
+          validRegex: '/^http(s?):\/\/.+/'
+
+        # Add other variables as required by the server's environment variables
+
+    instructions:
+        start: |-
+            Twenty is a modern Next.js CRM. 
+
+            More details: [GitHub Link to Twenty]
+        end: |-
+            Twenty has been successfully deployed!
+
+    displayName: Twenty CRM
+    isOfficial: false
+    description: Modern Next.js CRM.
+    documentation: See [GitHub Link to Twenty's Documentation]
