@@ -47,9 +47,10 @@ const StyledMainLogo = styled.div<StyledMainLogoProps>`
   width: 100%;
 `;
 
-export function Logo({ workspaceLogo, ...props }: Props) {
+export const Logo = ({ workspaceLogo, ...props }: Props) => {
   if (!workspaceLogo) {
     return (
+      // eslint-disable-next-line twenty/no-spread-props
       <StyledContainer {...props}>
         <StyledMainLogo logo="/icons/android/android-launchericon-192-192.png" />
       </StyledContainer>
@@ -57,6 +58,7 @@ export function Logo({ workspaceLogo, ...props }: Props) {
   }
 
   return (
+    // eslint-disable-next-line twenty/no-spread-props
     <StyledContainer {...props}>
       <StyledMainLogo logo={getImageAbsoluteURIOrBase64(workspaceLogo)} />
       <StyledTwentyLogoContainer>
@@ -64,4 +66,4 @@ export function Logo({ workspaceLogo, ...props }: Props) {
       </StyledTwentyLogoContainer>
     </StyledContainer>
   );
-}
+};

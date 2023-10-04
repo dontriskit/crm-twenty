@@ -1,12 +1,12 @@
 import { expect } from '@storybook/jest';
-import type { Meta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
 import assert from 'assert';
 
 import { AppPath } from '@/types/AppPath';
 import {
   PageDecorator,
-  type PageDecoratorArgs,
+  PageDecoratorArgs,
 } from '~/testing/decorators/PageDecorator';
 import { graphqlMocks } from '~/testing/graphqlMocks';
 import { sleep } from '~/testing/sleep';
@@ -35,11 +35,7 @@ export const FilterByName: Story = {
     const filterButton = await canvas.findByText('Filter');
     await userEvent.click(filterButton);
 
-    const nameFilterButton = (
-      await canvas.findAllByTestId('dropdown-menu-item')
-    ).find((item) => {
-      return item.textContent === 'Name';
-    });
+    const nameFilterButton = await canvas.findByTestId('select-filter-0');
 
     assert(nameFilterButton);
 
@@ -50,16 +46,16 @@ export const FilterByName: Story = {
       delay: 200,
     });
 
-    await sleep(50);
+    await sleep(200);
 
     expect(await canvas.findByText('Airbnb')).toBeInTheDocument();
     expect(await canvas.findByText('Aircall')).toBeInTheDocument();
-    await expect(canvas.queryAllByText('Qonto')).toStrictEqual([]);
+    expect(await canvas.queryAllByText('Qonto')).toStrictEqual([]);
 
-    const accountOwnerFilter = canvas.getAllByText('Name').find((item) => {
+    const nameFilter = canvas.getAllByText('Name').find((item) => {
       return item.parentElement?.textContent?.includes('Name:  Air');
     });
-    expect(accountOwnerFilter).toBeInTheDocument();
+    expect(nameFilter).toBeInTheDocument();
   },
 };
 
@@ -70,11 +66,9 @@ export const FilterByAccountOwner: Story = {
     const filterButton = await canvas.findByText('Filter');
     await userEvent.click(filterButton);
 
-    const accountOwnerFilterButton = (
-      await canvas.findAllByTestId('dropdown-menu-item')
-    ).find((item) => {
-      return item.textContent === 'Account owner';
-    });
+    const accountOwnerFilterButton = await canvas.findByTestId(
+      'select-filter-5',
+    );
 
     assert(accountOwnerFilterButton);
 
@@ -89,11 +83,11 @@ export const FilterByAccountOwner: Story = {
 
     await sleep(1000);
 
-    const charlesChip = (
-      await canvas.findAllByTestId('dropdown-menu-item')
-    ).find((item) => {
-      return item.textContent?.includes('Charles Test');
-    });
+    const charlesChip = (await canvas.findAllByTestId('menu-item')).find(
+      (item) => {
+        return item.textContent?.includes('Charles Test');
+      },
+    );
 
     assert(charlesChip);
 

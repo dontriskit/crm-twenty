@@ -1,21 +1,26 @@
 import { useCallback, useMemo, useState } from 'react';
-import type { RowsChangeData } from 'react-data-grid';
+import { RowsChangeData } from 'react-data-grid';
 import styled from '@emotion/styled';
 
 import { ContinueButton } from '@/spreadsheet-import/components/ContinueButton';
 import { Heading } from '@/spreadsheet-import/components/Heading';
 import { Table } from '@/spreadsheet-import/components/Table';
 import { useSpreadsheetImportInternal } from '@/spreadsheet-import/hooks/useSpreadsheetImportInternal';
-import type { Data } from '@/spreadsheet-import/types';
+import { Data } from '@/spreadsheet-import/types';
 import { addErrorsAndRunHooks } from '@/spreadsheet-import/utils/dataMutations';
-import { Button, ButtonVariant } from '@/ui/button/components/Button';
+import { Button } from '@/ui/button/components/Button';
 import { useDialog } from '@/ui/dialog/hooks/useDialog';
 import { IconTrash } from '@/ui/icon';
-import { Toggle } from '@/ui/input/toggle/components/Toggle';
+import { Toggle } from '@/ui/input/components/Toggle';
 import { Modal } from '@/ui/modal/components/Modal';
 
 import { generateColumns } from './components/columns';
-import type { Meta } from './types';
+import { Meta } from './types';
+
+const StyledContent = styled(Modal.Content)`
+  padding-left: ${({ theme }) => theme.spacing(6)};
+  padding-right: ${({ theme }) => theme.spacing(6)};
+`;
 
 const StyledToolbar = styled.div`
   display: flex;
@@ -173,8 +178,9 @@ export const ValidationStep = <T extends string>({
           { title: 'Cancel' },
           {
             title: 'Submit',
-            variant: ButtonVariant.Primary,
+            variant: 'primary',
             onClick: submitData,
+            role: 'confirm',
           },
         ],
       });
@@ -183,7 +189,7 @@ export const ValidationStep = <T extends string>({
 
   return (
     <>
-      <Modal.Content>
+      <StyledContent>
         <Heading
           title="Review your import"
           description="Correct the issues and fill the missing data."
@@ -199,9 +205,9 @@ export const ValidationStep = <T extends string>({
             </StyledErrorToggleDescription>
           </StyledErrorToggle>
           <Button
-            icon={<IconTrash />}
+            Icon={IconTrash}
             title="Remove"
-            variant={ButtonVariant.Danger}
+            accent="danger"
             onClick={deleteSelectedRows}
             disabled={selectedRows.size === 0}
           />
@@ -225,7 +231,7 @@ export const ValidationStep = <T extends string>({
             }}
           />
         </StyledScrollContainer>
-      </Modal.Content>
+      </StyledContent>
       <ContinueButton onContinue={onContinue} title="Confirm" />
     </>
   );

@@ -1,5 +1,8 @@
-import { ComponentProps, ReactElement } from 'react';
+import { ComponentProps } from 'react';
+import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
+
+import { IconComponent } from '@/ui/icon/types/IconComponent';
 
 const StyledHeader = styled.li`
   align-items: center;
@@ -8,8 +11,7 @@ const StyledHeader = styled.li`
   font-size: ${({ theme }) => theme.font.size.sm};
   font-weight: ${({ theme }) => theme.font.weight.medium};
 
-  padding: calc(${({ theme }) => theme.spacing(2)})
-    calc(${({ theme }) => theme.spacing(2)});
+  padding: ${({ theme }) => theme.spacing(2)};
 
   user-select: none;
 
@@ -40,23 +42,32 @@ const StyledEndIconWrapper = styled(StyledStartIconWrapper)`
 `;
 
 type DropdownMenuHeaderProps = ComponentProps<'li'> & {
-  startIcon?: ReactElement;
-  endIcon?: ReactElement;
+  StartIcon?: IconComponent;
+  EndIcon?: IconComponent;
 };
 
-export function DropdownMenuHeader({
+export const DropdownMenuHeader = ({
   children,
-  startIcon,
-  endIcon,
+  StartIcon,
+  EndIcon,
   ...props
-}: DropdownMenuHeaderProps) {
+}: DropdownMenuHeaderProps) => {
+  const theme = useTheme();
+
   return (
+    // eslint-disable-next-line twenty/no-spread-props
     <StyledHeader {...props}>
-      {startIcon && (
-        <StyledStartIconWrapper>{startIcon}</StyledStartIconWrapper>
+      {StartIcon && (
+        <StyledStartIconWrapper>
+          <StartIcon size={theme.icon.size.md} />
+        </StyledStartIconWrapper>
       )}
       {children}
-      {endIcon && <StyledEndIconWrapper>{endIcon}</StyledEndIconWrapper>}
+      {EndIcon && (
+        <StyledEndIconWrapper>
+          <EndIcon size={theme.icon.size.md} />
+        </StyledEndIconWrapper>
+      )}
     </StyledHeader>
   );
-}
+};

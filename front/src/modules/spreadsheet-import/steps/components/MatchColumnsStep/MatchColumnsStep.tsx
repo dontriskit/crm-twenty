@@ -4,14 +4,13 @@ import styled from '@emotion/styled';
 import { ContinueButton } from '@/spreadsheet-import/components/ContinueButton';
 import { Heading } from '@/spreadsheet-import/components/Heading';
 import { useSpreadsheetImportInternal } from '@/spreadsheet-import/hooks/useSpreadsheetImportInternal';
-import type { Field, RawData } from '@/spreadsheet-import/types';
+import { Field, RawData } from '@/spreadsheet-import/types';
 import { findUnmatchedRequiredFields } from '@/spreadsheet-import/utils/findUnmatchedRequiredFields';
 import { getMatchedColumns } from '@/spreadsheet-import/utils/getMatchedColumns';
 import { normalizeTableData } from '@/spreadsheet-import/utils/normalizeTableData';
 import { setColumn } from '@/spreadsheet-import/utils/setColumn';
 import { setIgnoreColumn } from '@/spreadsheet-import/utils/setIgnoreColumn';
 import { setSubColumn } from '@/spreadsheet-import/utils/setSubColumn';
-import { ButtonVariant } from '@/ui/button/components/Button';
 import { useDialog } from '@/ui/dialog/hooks/useDialog';
 import { Modal } from '@/ui/modal/components/Modal';
 import { useSnackBar } from '@/ui/snack-bar/hooks/useSnackBar';
@@ -22,6 +21,8 @@ import { UserTableColumn } from './components/UserTableColumn';
 
 const StyledContent = styled(Modal.Content)`
   align-items: center;
+  padding-left: ${({ theme }) => theme.spacing(6)};
+  padding-right: ${({ theme }) => theme.spacing(6)};
 `;
 
 const StyledColumnsContainer = styled.div`
@@ -224,7 +225,8 @@ export const MatchColumnsStep = <T extends string>({
           {
             title: 'Continue',
             onClick: handleAlertOnContinue,
-            variant: ButtonVariant.Primary,
+            variant: 'primary',
+            role: 'confirm',
           },
         ],
       });

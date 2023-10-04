@@ -1,11 +1,11 @@
 import { expect } from '@storybook/jest';
-import type { Meta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
 
 import { AppPath } from '@/types/AppPath';
 import {
   PageDecorator,
-  type PageDecoratorArgs,
+  PageDecoratorArgs,
 } from '~/testing/decorators/PageDecorator';
 import { graphqlMocks } from '~/testing/graphqlMocks';
 
@@ -33,17 +33,16 @@ export const SortByName: Story = {
     const sortButton = await canvas.findByText('Sort');
     await userEvent.click(sortButton);
 
-    const nameSortButton = canvas.getByText('Name', {
-      selector: 'li > div > div',
-    });
+    const nameSortButton = await canvas.findByTestId('select-sort-0');
+
     await userEvent.click(nameSortButton);
 
     expect(await canvas.getByTestId('remove-icon-name')).toBeInTheDocument();
 
     expect(await canvas.findByText('Airbnb')).toBeInTheDocument();
 
-    const cancelButton = canvas.getByText('Cancel');
-    await userEvent.click(cancelButton);
+    const resetButton = canvas.getByText('Reset');
+    await userEvent.click(resetButton);
 
     await expect(canvas.queryAllByTestId('remove-icon-name')).toStrictEqual([]);
   },

@@ -7,6 +7,8 @@ import { contextMenuIsOpenState } from '@/ui/context-menu/states/contextMenuIsOp
 
 import { actionBarOpenState } from '../states/actionBarIsOpenState';
 
+import { ActionBarItem } from './ActionBarItem';
+
 type OwnProps = {
   selectedIds: string[];
 };
@@ -31,18 +33,30 @@ const StyledContainerActionBar = styled.div`
   z-index: 1;
 `;
 
-export function ActionBar({ selectedIds }: OwnProps) {
+export const ActionBar = ({ selectedIds }: OwnProps) => {
   const actionBarOpen = useRecoilValue(actionBarOpenState);
-  const contextMenuOpen = useRecoilValue(contextMenuIsOpenState);
+  const contextMenuIsOpen = useRecoilValue(contextMenuIsOpenState);
   const actionBarEntries = useRecoilValue(actionBarEntriesState);
   const wrapperRef = useRef(null);
 
-  if (selectedIds.length === 0 || !actionBarOpen || contextMenuOpen) {
+  if (selectedIds.length === 0 || !actionBarOpen || contextMenuIsOpen) {
     return null;
   }
   return (
-    <StyledContainerActionBar ref={wrapperRef}>
-      {actionBarEntries}
+    <StyledContainerActionBar
+      data-select-disable
+      className="action-bar"
+      ref={wrapperRef}
+    >
+      {actionBarEntries.map((item) => (
+        <ActionBarItem
+          Icon={item.Icon}
+          accent={item.accent}
+          label={item.label}
+          onClick={item.onClick}
+          key={item.label}
+        />
+      ))}
     </StyledContainerActionBar>
   );
-}
+};

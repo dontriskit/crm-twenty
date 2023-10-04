@@ -1,20 +1,57 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { Key } from 'ts-key-enum';
 
+import { usePreviousHotkeyScope } from '@/ui/utilities/hotkey/hooks/usePreviousHotkeyScope';
+import { useScopedHotkeys } from '@/ui/utilities/hotkey/hooks/useScopedHotkeys';
 import {
   ClickOutsideMode,
   useListenClickOutside,
 } from '@/ui/utilities/pointer-event/hooks/useListenClickOutside';
 
-const StyledModalDiv = styled(motion.div)`
+import { ModalHotkeyScope } from './types/ModalHotkeyScope';
+
+const StyledModalDiv = styled(motion.div)<{
+  size?: ModalSize;
+  padding?: ModalPadding;
+}>`
   display: flex;
   flex-direction: column;
   background: ${({ theme }) => theme.background.primary};
+  color: ${({ theme }) => theme.font.color.primary};
   border-radius: ${({ theme }) => theme.border.radius.md};
   overflow: hidden;
   max-height: 90vh;
   z-index: 10000; // should be higher than Backdrop's z-index
+
+  width: ${({ size, theme }) => {
+    switch (size) {
+      case 'small':
+        return theme.modal.size.sm;
+      case 'medium':
+        return theme.modal.size.md;
+      case 'large':
+        return theme.modal.size.lg;
+      default:
+        return 'auto';
+    }
+  }};
+
+  padding: ${({ padding, theme }) => {
+    switch (padding) {
+      case 'none':
+        return theme.spacing(0);
+      case 'small':
+        return theme.spacing(2);
+      case 'medium':
+        return theme.spacing(4);
+      case 'large':
+        return theme.spacing(6);
+      default:
+        return 'auto';
+    }
+  }};
 `;
 
 const StyledHeader = styled.div`
@@ -61,29 +98,39 @@ const StyledBackDrop = styled(motion.div)`
  */
 type ModalHeaderProps = React.PropsWithChildren & React.ComponentProps<'div'>;
 
-function ModalHeader({ children, ...restProps }: ModalHeaderProps) {
-  return <StyledHeader {...restProps}>{children}</StyledHeader>;
-}
+const ModalHeader = ({ children, ...restProps }: ModalHeaderProps) => (
+  // eslint-disable-next-line twenty/no-spread-props
+  <StyledHeader {...restProps}>{children}</StyledHeader>
+);
 
 type ModalContentProps = React.PropsWithChildren & React.ComponentProps<'div'>;
 
-function ModalContent({ children, ...restProps }: ModalContentProps) {
-  return <StyledContent {...restProps}>{children}</StyledContent>;
-}
+const ModalContent = ({ children, ...restProps }: ModalContentProps) => (
+  // eslint-disable-next-line twenty/no-spread-props
+  <StyledContent {...restProps}>{children}</StyledContent>
+);
 
 type ModalFooterProps = React.PropsWithChildren & React.ComponentProps<'div'>;
 
-function ModalFooter({ children, ...restProps }: ModalFooterProps) {
-  return <StyledFooter {...restProps}>{children}</StyledFooter>;
-}
+const ModalFooter = ({ children, ...restProps }: ModalFooterProps) => (
+  // eslint-disable-next-line twenty/no-spread-props
+  <StyledFooter {...restProps}>{children}</StyledFooter>
+);
 
 /**
  * Modal
  */
+export type ModalSize = 'small' | 'medium' | 'large';
+export type ModalPadding = 'none' | 'small' | 'medium' | 'large';
+
 type ModalProps = React.PropsWithChildren &
   React.ComponentProps<'div'> & {
     isOpen?: boolean;
-    onOutsideClick?: () => void;
+    onClose?: () => void;
+    hotkeyScope?: ModalHotkeyScope;
+    onEnter?: () => void;
+    size?: ModalSize;
+    padding?: ModalPadding;
   };
 
 const modalVariants = {
@@ -92,43 +139,83 @@ const modalVariants = {
   exit: { opacity: 0 },
 };
 
-export function Modal({
+export const Modal = ({
   isOpen = false,
   children,
-  onOutsideClick,
+  onClose,
+  hotkeyScope = ModalHotkeyScope.Default,
+  onEnter,
+  size = 'medium',
+  padding = 'medium',
   ...restProps
-}: ModalProps) {
+}: ModalProps) => {
   const modalRef = useRef<HTMLDivElement>(null);
 
   useListenClickOutside({
     refs: [modalRef],
-    callback: () => onOutsideClick?.(),
+    callback: () => onClose?.(),
     mode: ClickOutsideMode.absolute,
   });
 
-  if (!isOpen) {
-    return null;
-  }
+  const {
+    goBackToPreviousHotkeyScope,
+    setHotkeyScopeAndMemorizePreviousScope,
+  } = usePreviousHotkeyScope();
 
-  return (
+  useScopedHotkeys(
+    [Key.Escape],
+    () => {
+      onClose?.();
+    },
+    hotkeyScope,
+    [onClose],
+  );
+
+  useScopedHotkeys(
+    [Key.Enter],
+    () => {
+      onEnter?.();
+    },
+    hotkeyScope,
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      setHotkeyScopeAndMemorizePreviousScope(hotkeyScope);
+    } else {
+      goBackToPreviousHotkeyScope();
+    }
+  }, [
+    goBackToPreviousHotkeyScope,
+    hotkeyScope,
+    isOpen,
+    setHotkeyScopeAndMemorizePreviousScope,
+  ]);
+
+  return isOpen ? (
     <StyledBackDrop>
       <StyledModalDiv
         // framer-motion seems to have typing problems with refs
         // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         ref={modalRef}
+        size={size}
+        padding={padding}
         initial="hidden"
         animate="visible"
         exit="exit"
         layout
         variants={modalVariants}
+        // eslint-disable-next-line twenty/no-spread-props
         {...restProps}
       >
         {children}
       </StyledModalDiv>
     </StyledBackDrop>
+  ) : (
+    <></>
   );
-}
+};
 
 Modal.Header = ModalHeader;
 Modal.Content = ModalContent;

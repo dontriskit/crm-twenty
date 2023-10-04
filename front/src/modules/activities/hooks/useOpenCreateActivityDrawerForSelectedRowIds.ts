@@ -1,6 +1,6 @@
 import { useRecoilValue } from 'recoil';
 
-import { selectedRowIdsSelector } from '@/ui/table/states/selectors/selectedRowIdsSelector';
+import { selectedRowIdsSelector } from '@/ui/data-table/states/selectors/selectedRowIdsSelector';
 import { ActivityType } from '~/generated/graphql';
 
 import {
@@ -10,20 +10,28 @@ import {
 
 import { useOpenCreateActivityDrawer } from './useOpenCreateActivityDrawer';
 
-export function useOpenCreateActivityDrawerForSelectedRowIds() {
-  const selectedEntityIds = useRecoilValue(selectedRowIdsSelector);
+export const useOpenCreateActivityDrawerForSelectedRowIds = () => {
+  const selectedRowIds = useRecoilValue(selectedRowIdsSelector);
 
   const openCreateActivityDrawer = useOpenCreateActivityDrawer();
 
-  return function openCreateCommentDrawerForSelectedRowIds(
+  return (
     type: ActivityType,
     entityType: ActivityTargetableEntityType,
-  ) {
-    const activityTargetableEntityArray: ActivityTargetableEntity[] =
-      selectedEntityIds.map((id) => ({
+    relatedEntities?: ActivityTargetableEntity[],
+  ) => {
+    let activityTargetableEntityArray: ActivityTargetableEntity[] =
+      selectedRowIds.map((id) => ({
         type: entityType,
         id,
       }));
-    openCreateActivityDrawer(type, activityTargetableEntityArray);
+    if (relatedEntities) {
+      activityTargetableEntityArray =
+        activityTargetableEntityArray.concat(relatedEntities);
+    }
+    openCreateActivityDrawer({
+      type,
+      targetableEntities: activityTargetableEntityArray,
+    });
   };
-}
+};

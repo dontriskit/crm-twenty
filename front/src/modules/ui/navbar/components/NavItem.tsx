@@ -1,21 +1,24 @@
-import { ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useRecoilState } from 'recoil';
 
+import { IconComponent } from '@/ui/icon/types/IconComponent';
 import { MOBILE_VIEWPORT } from '@/ui/theme/constants/theme';
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 
 import { isNavbarOpenedState } from '../../layout/states/isNavbarOpenedState';
 
-type OwnProps = {
+type NavItemProps = {
   label: string;
   to?: string;
   onClick?: () => void;
+  Icon: IconComponent;
   active?: boolean;
-  icon: ReactNode;
   danger?: boolean;
   soon?: boolean;
+  count?: number;
+  keyboard?: string[];
 };
 
 type StyledItemProps = {
@@ -56,6 +59,9 @@ const StyledItem = styled.button<StyledItemProps>`
     color: ${(props) =>
       props.danger ? props.theme.color.red : props.theme.font.color.primary};
   }
+  :hover .keyboard-shortcuts {
+    visibility: visible;
+  }
   user-select: none;
 
   @media (max-width: ${MOBILE_VIEWPORT}px) {
@@ -81,13 +87,50 @@ const StyledSoonPill = styled.div`
   padding-right: ${({ theme }) => theme.spacing(2)};
 `;
 
-function NavItem({ label, icon, to, onClick, active, danger, soon }: OwnProps) {
+const StyledItemCount = styled.div`
+  align-items: center;
+  background-color: ${({ theme }) => theme.color.blue};
+  border-radius: ${({ theme }) => theme.border.radius.rounded};
+  color: ${({ theme }) => theme.grayScale.gray0};
+  display: flex;
+  font-size: ${({ theme }) => theme.font.size.xs};
+  font-weight: ${({ theme }) => theme.font.weight.semiBold};
+
+  height: 16px;
+  justify-content: center;
+  margin-left: auto;
+  width: 16px;
+`;
+
+const StyledKeyBoardShortcut = styled.div`
+  align-items: center;
+  border-radius: 4px;
+  color: ${({ theme }) => theme.font.color.light};
+  display: flex;
+  justify-content: center;
+  letter-spacing: 1px;
+  margin-left: auto;
+  visibility: hidden;
+`;
+
+const NavItem = ({
+  label,
+  Icon,
+  to,
+  onClick,
+  active,
+  danger,
+  soon,
+  count,
+  keyboard,
+}: NavItemProps) => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [, setIsNavbarOpened] = useRecoilState(isNavbarOpenedState);
 
   const isMobile = useIsMobile();
 
-  function handleItemClick() {
+  const handleItemClick = () => {
     if (isMobile) {
       setIsNavbarOpened(false);
     }
@@ -97,7 +140,7 @@ function NavItem({ label, icon, to, onClick, active, danger, soon }: OwnProps) {
     } else if (to) {
       navigate(to);
     }
-  }
+  };
 
   return (
     <StyledItem
@@ -107,11 +150,17 @@ function NavItem({ label, icon, to, onClick, active, danger, soon }: OwnProps) {
       danger={danger}
       soon={soon}
     >
-      {icon}
+      {Icon && <Icon size={theme.icon.size.md} stroke={theme.icon.stroke.sm} />}
       <StyledItemLabel>{label}</StyledItemLabel>
       {soon && <StyledSoonPill>Soon</StyledSoonPill>}
+      {!!count && <StyledItemCount>{count}</StyledItemCount>}
+      {keyboard && (
+        <StyledKeyBoardShortcut className="keyboard-shortcuts">
+          {keyboard.map((key) => key)}
+        </StyledKeyBoardShortcut>
+      )}
     </StyledItem>
   );
-}
+};
 
 export default NavItem;

@@ -1,9 +1,10 @@
 import { gql } from '@apollo/client';
 
-export const DELETE_VIEWS = gql`
-  mutation DeleteViews($where: ViewWhereInput!) {
-    deleteManyView(where: $where) {
-      count
+export const DELETE_VIEW = gql`
+  mutation DeleteView($where: ViewWhereUniqueInput!) {
+    view: deleteOneView(where: $where) {
+      id
+      name
     }
   }
 `;

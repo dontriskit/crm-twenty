@@ -1,9 +1,9 @@
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 
-import { Button, ButtonVariant } from '@/ui/button/components/Button';
+import { Button } from '@/ui/button/components/Button';
 import { IconCopy, IconLink } from '@/ui/icon';
-import { TextInput } from '@/ui/input/text/components/TextInput';
+import { TextInputSettings } from '@/ui/input/text/components/TextInputSettings';
 import { useSnackBar } from '@/ui/snack-bar/hooks/useSnackBar';
 
 const StyledContainer = styled.div`
@@ -21,7 +21,7 @@ type OwnProps = {
   inviteLink: string;
 };
 
-export function WorkspaceInviteLink({ inviteLink }: OwnProps) {
+export const WorkspaceInviteLink = ({ inviteLink }: OwnProps) => {
   const theme = useTheme();
 
   const { enqueueSnackBar } = useSnackBar();
@@ -29,11 +29,12 @@ export function WorkspaceInviteLink({ inviteLink }: OwnProps) {
   return (
     <StyledContainer>
       <StyledLinkContainer>
-        <TextInput value={inviteLink} disabled fullWidth />
+        <TextInputSettings value={inviteLink} disabled fullWidth />
       </StyledLinkContainer>
       <Button
-        icon={<IconLink size={theme.icon.size.md} />}
-        variant={ButtonVariant.Primary}
+        Icon={IconLink}
+        variant="primary"
+        accent="blue"
         title="Copy link"
         onClick={() => {
           enqueueSnackBar('Link copied to clipboard', {
@@ -46,4 +47,4 @@ export function WorkspaceInviteLink({ inviteLink }: OwnProps) {
       />
     </StyledContainer>
   );
-}
+};

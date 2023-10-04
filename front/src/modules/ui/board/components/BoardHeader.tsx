@@ -1,111 +1,127 @@
-import { Context, ReactNode, useCallback, useState } from 'react';
-import styled from '@emotion/styled';
+import { useContext } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useRecoilCallback, useRecoilState, useRecoilValue } from 'recoil';
 
-import { FilterDropdownButton } from '@/ui/filter-n-sort/components/FilterDropdownButton';
-import SortAndFilterBar from '@/ui/filter-n-sort/components/SortAndFilterBar';
-import { SortDropdownButton } from '@/ui/filter-n-sort/components/SortDropdownButton';
-import { FiltersHotkeyScope } from '@/ui/filter-n-sort/types/FiltersHotkeyScope';
-import { SelectedSortType, SortType } from '@/ui/filter-n-sort/types/interface';
-import { TopBar } from '@/ui/top-bar/TopBar';
+import { BoardContext } from '@/companies/states/contexts/BoardContext';
+import { DropdownRecoilScopeContext } from '@/ui/dropdown/states/recoil-scope-contexts/DropdownRecoilScopeContext';
+import { RecoilScope } from '@/ui/utilities/recoil-scope/components/RecoilScope';
+import { useRecoilScopedState } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedState';
+import { useRecoilScopedValue } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedValue';
+import { useRecoilScopeId } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopeId';
+import { ViewBar } from '@/ui/view-bar/components/ViewBar';
+import { ViewBarContext } from '@/ui/view-bar/contexts/ViewBarContext';
+import { currentViewIdScopedState } from '@/ui/view-bar/states/currentViewIdScopedState';
 
-type OwnProps<SortField> = {
-  viewName: string;
-  viewIcon?: ReactNode;
-  availableSorts?: Array<SortType<SortField>>;
-  onSortsUpdate?: (sorts: Array<SelectedSortType<SortField>>) => void;
-  context: Context<string | null>;
+import { boardCardFieldsScopedState } from '../states/boardCardFieldsScopedState';
+import { boardColumnsState } from '../states/boardColumnsState';
+import { savedBoardCardFieldsFamilyState } from '../states/savedBoardCardFieldsFamilyState';
+import { savedBoardColumnsState } from '../states/savedBoardColumnsState';
+import { canPersistBoardCardFieldsScopedFamilySelector } from '../states/selectors/canPersistBoardCardFieldsScopedFamilySelector';
+import { canPersistBoardColumnsSelector } from '../states/selectors/canPersistBoardColumnsSelector';
+import { BoardColumnDefinition } from '../types/BoardColumnDefinition';
+import { BoardOptionsDropdownKey } from '../types/BoardOptionsDropdownKey';
+import { BoardOptionsHotkeyScope } from '../types/BoardOptionsHotkeyScope';
+
+import { BoardOptionsDropdown } from './BoardOptionsDropdown';
+
+export type BoardHeaderProps = {
+  className?: string;
+  onStageAdd?: (boardColumn: BoardColumnDefinition) => void;
 };
 
-const StyledIcon = styled.div`
-  display: flex;
-  margin-left: ${({ theme }) => theme.spacing(1)};
-  margin-right: ${({ theme }) => theme.spacing(2)};
+export const BoardHeader = ({ className, onStageAdd }: BoardHeaderProps) => {
+  const { onCurrentViewSubmit, ...viewBarContextProps } =
+    useContext(ViewBarContext);
 
-  & > svg {
-    font-size: ${({ theme }) => theme.icon.size.sm};
-  }
-`;
+  const BoardRecoilScopeContext =
+    useContext(BoardContext).BoardRecoilScopeContext;
 
-export function BoardHeader<SortField>({
-  viewName,
-  viewIcon,
-  availableSorts,
-  onSortsUpdate,
-  context,
-}: OwnProps<SortField>) {
-  const [sorts, innerSetSorts] = useState<Array<SelectedSortType<SortField>>>(
-    [],
+  const ViewBarRecoilScopeContext =
+    useContext(ViewBarContext).ViewBarRecoilScopeContext;
+
+  const boardRecoilScopeId = useRecoilScopeId(BoardRecoilScopeContext);
+
+  const currentViewId = useRecoilScopedValue(
+    currentViewIdScopedState,
+    ViewBarRecoilScopeContext,
+  );
+  const canPersistBoardCardFields = useRecoilValue(
+    canPersistBoardCardFieldsScopedFamilySelector({
+      recoilScopeId: boardRecoilScopeId,
+      viewId: currentViewId,
+    }),
+  );
+  const canPersistBoardColumns = useRecoilValue(canPersistBoardColumnsSelector);
+
+  const [boardCardFields, setBoardCardFields] = useRecoilScopedState(
+    boardCardFieldsScopedState,
+    BoardRecoilScopeContext,
+  );
+  const [savedBoardCardFields, setSavedBoardCardFields] = useRecoilState(
+    savedBoardCardFieldsFamilyState(currentViewId),
   );
 
-  const sortSelect = useCallback(
-    (newSort: SelectedSortType<SortField>) => {
-      const newSorts = updateSortOrFilterByKey(sorts, newSort);
-      innerSetSorts(newSorts);
-      onSortsUpdate && onSortsUpdate(newSorts);
-    },
-    [onSortsUpdate, sorts],
+  const [_, setSearchParams] = useSearchParams();
+  const [boardColumns, setBoardColumns] = useRecoilState(boardColumnsState);
+  const [, setSavedBoardColumns] = useRecoilState(savedBoardColumnsState);
+
+  const savedBoardColumns = useRecoilValue(savedBoardColumnsState);
+
+  const handleViewBarReset = () => {
+    setBoardCardFields(savedBoardCardFields);
+    setBoardColumns(savedBoardColumns);
+  };
+
+  const handleViewSelect = useRecoilCallback(
+    ({ set, snapshot }) =>
+      async (viewId: string) => {
+        const savedBoardCardFields = await snapshot.getPromise(
+          savedBoardCardFieldsFamilyState(viewId),
+        );
+        set(
+          boardCardFieldsScopedState(boardRecoilScopeId),
+          savedBoardCardFields,
+        );
+        setSearchParams({ view: viewId });
+      },
+    [boardRecoilScopeId, setSearchParams],
   );
 
-  const sortUnselect = useCallback(
-    (sortKey: string) => {
-      const newSorts = sorts.filter((sort) => sort.key !== sortKey);
-      innerSetSorts(newSorts);
-      onSortsUpdate && onSortsUpdate(newSorts);
-    },
-    [onSortsUpdate, sorts],
-  );
+  const handleCurrentViewSubmit = async () => {
+    if (canPersistBoardCardFields) {
+      setSavedBoardCardFields(boardCardFields);
+    }
+    if (canPersistBoardColumns) {
+      setSavedBoardColumns(boardColumns);
+    }
+
+    await onCurrentViewSubmit?.();
+  };
+
+  const canPersistView = canPersistBoardCardFields || canPersistBoardColumns;
 
   return (
-    <TopBar
-      displayBottomBorder={false}
-      leftComponent={
-        <>
-          <StyledIcon>{viewIcon}</StyledIcon>
-          {viewName}
-        </>
-      }
-      rightComponent={
-        <>
-          <FilterDropdownButton
-            context={context}
-            HotkeyScope={FiltersHotkeyScope.FilterDropdownButton}
-          />
-          <SortDropdownButton<SortField>
-            context={context}
-            isSortSelected={sorts.length > 0}
-            availableSorts={availableSorts || []}
-            onSortSelect={sortSelect}
-            HotkeyScope={FiltersHotkeyScope.FilterDropdownButton}
-          />
-        </>
-      }
-      bottomComponent={
-        <SortAndFilterBar
-          context={context}
-          sorts={sorts}
-          onRemoveSort={sortUnselect}
-          onCancelClick={() => {
-            innerSetSorts([]);
-            onSortsUpdate && onSortsUpdate([]);
-          }}
+    <RecoilScope CustomRecoilScopeContext={DropdownRecoilScopeContext}>
+      <ViewBarContext.Provider
+        value={{
+          ...viewBarContextProps,
+          canPersistViewFields: canPersistView,
+          onCurrentViewSubmit: handleCurrentViewSubmit,
+          onViewBarReset: handleViewBarReset,
+          onViewSelect: handleViewSelect,
+        }}
+      >
+        <ViewBar
+          className={className}
+          optionsDropdownButton={
+            <BoardOptionsDropdown
+              customHotkeyScope={{ scope: BoardOptionsHotkeyScope.Dropdown }}
+              onStageAdd={onStageAdd}
+            />
+          }
+          optionsDropdownKey={BoardOptionsDropdownKey}
         />
-      }
-    />
+      </ViewBarContext.Provider>
+    </RecoilScope>
   );
-}
-
-function updateSortOrFilterByKey<SortOrFilter extends { key: string }>(
-  sorts: Readonly<SortOrFilter[]>,
-  newSort: SortOrFilter,
-): SortOrFilter[] {
-  const newSorts = [...sorts];
-  const existingSortIndex = sorts.findIndex((sort) => sort.key === newSort.key);
-
-  if (existingSortIndex !== -1) {
-    newSorts[existingSortIndex] = newSort;
-  } else {
-    newSorts.push(newSort);
-  }
-
-  return newSorts;
-}
+};

@@ -1,14 +1,9 @@
 import { useState } from 'react';
-import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useRecoilState } from 'recoil';
 
 import { currentUserState } from '@/auth/states/currentUserState';
-import {
-  Button,
-  ButtonSize,
-  ButtonVariant,
-} from '@/ui/button/components/Button';
+import { IconButton } from '@/ui/button/components/IconButton';
 import { IconSettings, IconTrash } from '@/ui/icon';
 import { SubMenuTopBarContainer } from '@/ui/layout/components/SubMenuTopBarContainer';
 import { ConfirmationModal } from '@/ui/modal/components/ConfirmationModal';
@@ -25,7 +20,6 @@ import {
 const StyledContainer = styled.div`
   display: flex;
   flex-direction: column;
-  margin-top: ${({ theme }) => theme.spacing(8)};
   padding: ${({ theme }) => theme.spacing(8)};
   width: 350px;
 `;
@@ -37,13 +31,12 @@ const StyledButtonContainer = styled.div`
   margin-left: ${({ theme }) => theme.spacing(3)};
 `;
 
-export function SettingsWorkspaceMembers() {
+export const SettingsWorkspaceMembers = () => {
   const [isConfirmationModalOpen, setIsConfirmationModalOpen] = useState(false);
   const [userToDelete, setUserToDelete] = useState<string | undefined>();
 
   const [currentUser] = useRecoilState(currentUserState);
   const workspace = currentUser?.workspaceMember?.workspace;
-  const theme = useTheme();
 
   const { data } = useGetWorkspaceMembersQuery();
 
@@ -68,15 +61,20 @@ export function SettingsWorkspaceMembers() {
           return;
         }
 
-        const normalizedId = cache.identify({
-          id: responseData.deleteWorkspaceMember.id,
-          __typename: 'WorkspaceMember',
+        cache.evict({
+          id: cache.identify({
+            id: responseData.deleteWorkspaceMember.id,
+            __typename: 'WorkspaceMember',
+          }),
         });
 
-        // Evict object from cache
-        cache.evict({ id: normalizedId });
+        cache.evict({
+          id: cache.identify({
+            id: userId,
+            __typename: 'User',
+          }),
+        });
 
-        // Clean up relation to this object
         cache.gc();
       },
     });
@@ -84,7 +82,7 @@ export function SettingsWorkspaceMembers() {
   };
 
   return (
-    <SubMenuTopBarContainer icon={<IconSettings size={16} />} title="Settings">
+    <SubMenuTopBarContainer Icon={IconSettings} title="Settings">
       <StyledContainer>
         <H1Title title="Members" />
         {workspace?.inviteHash && (
@@ -110,14 +108,14 @@ export function SettingsWorkspaceMembers() {
               accessory={
                 currentUser?.id !== member.user.id && (
                   <StyledButtonContainer>
-                    <Button
+                    <IconButton
                       onClick={() => {
                         setIsConfirmationModalOpen(true);
                         setUserToDelete(member.user.id);
                       }}
-                      variant={ButtonVariant.Tertiary}
-                      size={ButtonSize.Small}
-                      icon={<IconTrash size={theme.icon.size.md} />}
+                      variant="tertiary"
+                      size="medium"
+                      Icon={IconTrash}
                     />
                   </StyledButtonContainer>
                 )
@@ -143,4 +141,4 @@ export function SettingsWorkspaceMembers() {
       />
     </SubMenuTopBarContainer>
   );
-}
+};

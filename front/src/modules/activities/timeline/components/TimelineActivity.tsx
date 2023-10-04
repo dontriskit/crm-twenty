@@ -1,8 +1,8 @@
 import { Tooltip } from 'react-tooltip';
 import styled from '@emotion/styled';
 
-import { useCompleteTask } from '@/activities/hooks/useCompleteTask';
 import { useOpenActivityRightDrawer } from '@/activities/hooks/useOpenActivityRightDrawer';
+import { useCompleteTask } from '@/activities/tasks/hooks/useCompleteTask';
 import { IconNotes } from '@/ui/icon';
 import { OverflowingTextWithTooltip } from '@/ui/tooltip/OverflowingTextWithTooltip';
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
@@ -125,7 +125,7 @@ type OwnProps = {
   };
 };
 
-export function TimelineActivity({ activity }: OwnProps) {
+export const TimelineActivity = ({ activity }: OwnProps) => {
   const beautifiedCreatedAt = beautifyPastDateRelativeToNow(activity.createdAt);
   const exactCreatedAt = beautifyExactDateTime(activity.createdAt);
   const body = JSON.parse(activity.body ?? '{}')[0]?.content[0]?.text;
@@ -176,4 +176,4 @@ export function TimelineActivity({ activity }: OwnProps) {
       </StyledTimelineItemContainer>
     </>
   );
-}
+};

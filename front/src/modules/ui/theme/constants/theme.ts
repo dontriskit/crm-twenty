@@ -1,3 +1,4 @@
+/* eslint-disable twenty/no-hardcoded-colors */
 import { accentDark, accentLight } from './accent';
 import { animation } from './animation';
 import { backgroundDark, backgroundLight } from './background';
@@ -7,6 +8,7 @@ import { boxShadowDark, boxShadowLight } from './boxShadow';
 import { color, grayScale } from './colors';
 import { fontDark, fontLight } from './font';
 import { icon } from './icon';
+import { modal } from './modal';
 import { tagDark, tagLight } from './tag';
 import { text } from './text';
 
@@ -14,6 +16,7 @@ const common = {
   color: color,
   grayScale: grayScale,
   icon: icon,
+  modal: modal,
   text: text,
   blur: blur,
   animation: animation,
@@ -31,6 +34,7 @@ const common = {
       color: grayScale.gray0,
     },
   },
+  spacingMultiplicator: 4,
   spacing: (multiplicator: number) => `${multiplicator * 4}px`,
   betweenSiblingsGap: `2px`,
   table: {

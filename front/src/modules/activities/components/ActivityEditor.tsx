@@ -7,9 +7,8 @@ import { ActivityBodyEditor } from '@/activities/components/ActivityBodyEditor';
 import { ActivityComments } from '@/activities/components/ActivityComments';
 import { ActivityTypeDropdown } from '@/activities/components/ActivityTypeDropdown';
 import { GET_ACTIVITIES } from '@/activities/graphql/queries/getActivities';
-import { PropertyBox } from '@/ui/editable-field/property-box/components/PropertyBox';
-import { DateEditableField } from '@/ui/editable-field/variants/components/DateEditableField';
-import { IconCalendar } from '@/ui/icon/index';
+import { PropertyBox } from '@/ui/inline-cell/property-box/components/PropertyBox';
+import { RecoilScope } from '@/ui/utilities/recoil-scope/components/RecoilScope';
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 import {
   Activity,
@@ -21,6 +20,7 @@ import {
 import { debounce } from '~/utils/debounce';
 
 import { ActivityAssigneeEditableField } from '../editable-fields/components/ActivityAssigneeEditableField';
+import { ActivityEditorDateField } from '../editable-fields/components/ActivityEditorDateField';
 import { ActivityRelationEditableField } from '../editable-fields/components/ActivityRelationEditableField';
 import { ACTIVITY_UPDATE_FRAGMENT } from '../graphql/fragments/activityUpdateFragment';
 import { CommentForDrawer } from '../types/CommentForDrawer';
@@ -78,11 +78,11 @@ type OwnProps = {
   autoFillTitle?: boolean;
 };
 
-export function ActivityEditor({
+export const ActivityEditor = ({
   activity,
   showComment = true,
   autoFillTitle = false,
-}: OwnProps) {
+}: OwnProps) => {
   const [hasUserManuallySetTitle, setHasUserManuallySetTitle] =
     useState<boolean>(false);
 
@@ -119,6 +119,7 @@ export function ActivityEditor({
             title: newTitle,
           },
         },
+        refetchQueries: [getOperationName(GET_ACTIVITIES) ?? ''],
       });
     },
     [activity.id, cachedActivity, updateActivityMutation],
@@ -152,13 +153,13 @@ export function ActivityEditor({
 
   const debouncedUpdateTitle = debounce(updateTitle, 200);
 
-  function updateTitleFromBody(body: string) {
+  const updateTitleFromBody = (body: string) => {
     const parsedTitle = JSON.parse(body)[0]?.content[0]?.text;
     if (!hasUserManuallySetTitle && autoFillTitle) {
       setTitle(parsedTitle);
       debouncedUpdateTitle(parsedTitle);
     }
-  }
+  };
 
   if (!activity) {
     return <></>;
@@ -183,25 +184,12 @@ export function ActivityEditor({
           <PropertyBox>
             {activity.type === ActivityType.Task && (
               <>
-                <DateEditableField
-                  value={activity.dueAt}
-                  icon={<IconCalendar />}
-                  label="Due date"
-                  onSubmit={(newDate) => {
-                    updateActivityMutation({
-                      variables: {
-                        where: {
-                          id: activity.id,
-                        },
-                        data: {
-                          dueAt: newDate,
-                        },
-                      },
-                      refetchQueries: [getOperationName(GET_ACTIVITIES) ?? ''],
-                    });
-                  }}
-                />
-                <ActivityAssigneeEditableField activity={activity} />
+                <RecoilScope>
+                  <ActivityEditorDateField activityId={activity.id} />
+                </RecoilScope>
+                <RecoilScope>
+                  <ActivityAssigneeEditableField activity={activity} />
+                </RecoilScope>
               </>
             )}
             <ActivityRelationEditableField activity={activity} />
@@ -223,4 +211,4 @@ export function ActivityEditor({
       )}
     </StyledContainer>
   );
-}
+};

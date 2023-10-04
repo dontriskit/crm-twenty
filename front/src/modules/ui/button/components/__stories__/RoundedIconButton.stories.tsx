@@ -1,5 +1,5 @@
 import { expect, jest } from '@storybook/jest';
-import type { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
 
 import { IconArrowRight } from '@/ui/icon';
@@ -12,15 +12,15 @@ const clickJestFn = jest.fn();
 const meta: Meta<typeof RoundedIconButton> = {
   title: 'UI/Button/RoundedIconButton',
   component: RoundedIconButton,
-  decorators: [ComponentDecorator],
-  argTypes: { icon: { control: false } },
-  args: { onClick: clickJestFn, icon: <IconArrowRight size={15} /> },
 };
 
 export default meta;
 type Story = StoryObj<typeof RoundedIconButton>;
 
 export const Default: Story = {
+  decorators: [ComponentDecorator],
+  argTypes: { Icon: { control: false } },
+  args: { onClick: clickJestFn, Icon: IconArrowRight },
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 

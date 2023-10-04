@@ -2,6 +2,7 @@ import { Meta, StoryObj } from '@storybook/react';
 
 import { CatalogDecorator } from '~/testing/decorators/CatalogDecorator';
 import { ComponentDecorator } from '~/testing/decorators/ComponentDecorator';
+import { CatalogStory } from '~/testing/types';
 
 import { CircularProgressBar } from '../CircularProgressBar';
 
@@ -11,28 +12,21 @@ const meta: Meta<typeof CircularProgressBar> = {
   args: {
     size: 50,
   },
+  parameters: {
+    chromatic: { disableSnapshot: true },
+  },
 };
 
 export default meta;
 
 type Story = StoryObj<typeof CircularProgressBar>;
-const args = {};
-const defaultArgTypes = {
-  control: false,
-};
+
 export const Default: Story = {
-  args,
   decorators: [ComponentDecorator],
 };
 
-export const Catalog = {
-  args: {
-    ...args,
-  },
-  argTypes: {
-    strokeWidth: defaultArgTypes,
-    segmentColor: defaultArgTypes,
-  },
+export const Catalog: CatalogStory<Story, typeof CircularProgressBar> = {
+  argTypes: {},
   parameters: {
     catalog: {
       dimensions: [

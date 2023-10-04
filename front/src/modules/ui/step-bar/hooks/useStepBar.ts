@@ -7,38 +7,39 @@ export type StepsOptions = {
   initialStep: number;
 };
 
-export function useStepBar({ initialStep }: StepsOptions) {
-  const [stepsState, setStepsState] = useRecoilState(stepBarInternalState);
+export const useStepBar = ({ initialStep }: StepsOptions) => {
+  const [stepBarInternal, setStepBarInternal] =
+    useRecoilState(stepBarInternalState);
 
-  function nextStep() {
-    setStepsState((prevState) => ({
+  const nextStep = () => {
+    setStepBarInternal((prevState) => ({
       ...prevState,
       activeStep: prevState.activeStep + 1,
     }));
-  }
+  };
 
-  function prevStep() {
-    setStepsState((prevState) => ({
+  const prevStep = () => {
+    setStepBarInternal((prevState) => ({
       ...prevState,
       activeStep: prevState.activeStep - 1,
     }));
-  }
+  };
 
-  function reset() {
-    setStepsState((prevState) => ({
+  const reset = () => {
+    setStepBarInternal((prevState) => ({
       ...prevState,
       activeStep: 0,
     }));
-  }
+  };
 
   const setStep = useCallback(
     (step: number) => {
-      setStepsState((prevState) => ({
+      setStepBarInternal((prevState) => ({
         ...prevState,
         activeStep: step,
       }));
     },
-    [setStepsState],
+    [setStepBarInternal],
   );
 
   useEffect(() => {
@@ -54,6 +55,6 @@ export function useStepBar({ initialStep }: StepsOptions) {
     prevStep,
     reset,
     setStep,
-    activeStep: stepsState.activeStep,
+    activeStep: stepBarInternal.activeStep,
   };
-}
+};

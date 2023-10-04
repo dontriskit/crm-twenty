@@ -5,7 +5,9 @@ import { CREATE_ACTIVITY_WITH_COMMENT } from '@/activities/graphql/mutations/cre
 import { GET_ACTIVITIES } from '@/activities/graphql/queries/getActivities';
 import { CREATE_EVENT } from '@/analytics/graphql/queries/createEvent';
 import { GET_CLIENT_CONFIG } from '@/client-config/graphql/queries/getClientConfig';
+import { INSERT_ONE_COMPANY } from '@/companies/graphql/mutations/insertOneCompany';
 import { GET_COMPANIES } from '@/companies/graphql/queries/getCompanies';
+import { INSERT_ONE_PERSON } from '@/people/graphql/mutations/insertOnePerson';
 import { UPDATE_ONE_PERSON } from '@/people/graphql/mutations/updateOnePerson';
 import { GET_PEOPLE } from '@/people/graphql/queries/getPeople';
 import { GET_PERSON } from '@/people/graphql/queries/getPerson';
@@ -17,6 +19,7 @@ import { SEARCH_PEOPLE_QUERY } from '@/search/graphql/queries/searchPeopleQuery'
 import { SEARCH_USER_QUERY } from '@/search/graphql/queries/searchUserQuery';
 import { GET_CURRENT_USER } from '@/users/graphql/queries/getCurrentUser';
 import { GET_VIEW_FIELDS } from '@/views/graphql/queries/getViewFields';
+import { GET_VIEWS } from '@/views/graphql/queries/getViews';
 import {
   GetCompaniesQuery,
   GetPeopleQuery,
@@ -25,14 +28,22 @@ import {
   SearchCompanyQuery,
   SearchPeopleQuery,
   SearchUserQuery,
+  ViewType,
 } from '~/generated/graphql';
 
 import { mockedActivities, mockedTasks } from './mock-data/activities';
 import {
   mockedCompaniesData,
-  mockedCompanyViewFields,
+  mockedCompanyBoardCardFields,
+  mockedCompanyBoardViews,
+  mockedCompanyTableColumns,
+  mockedCompanyTableViews,
 } from './mock-data/companies';
-import { mockedPeopleData, mockedPersonViewFields } from './mock-data/people';
+import {
+  mockedPeopleData,
+  mockedPersonTableColumns,
+  mockedPersonTableViews,
+} from './mock-data/people';
 import { mockedPipelineProgressData } from './mock-data/pipeline-progress';
 import { mockedPipelinesData } from './mock-data/pipelines';
 import { mockedUsersData } from './mock-data/users';
@@ -220,23 +231,47 @@ export const graphqlMocks = [
   graphql.query(getOperationName(GET_ACTIVITIES) ?? '', (req, res, ctx) => {
     return res(
       ctx.data({
-        findManyActivities: mockedActivities,
+        findManyActivities:
+          req?.variables?.where?.type?.equals === 'Task'
+            ? mockedTasks
+            : mockedActivities,
+      }),
+    );
+  }),
+  graphql.query(getOperationName(GET_VIEWS) ?? '', (req, res, ctx) => {
+    const {
+      where: {
+        objectId: { equals: objectId },
+        type: { equals: type },
+      },
+    } = req.variables;
+
+    return res(
+      ctx.data({
+        views:
+          objectId === 'person'
+            ? mockedPersonTableViews
+            : type === ViewType.Table
+            ? mockedCompanyTableViews
+            : mockedCompanyBoardViews,
       }),
     );
   }),
   graphql.query(getOperationName(GET_VIEW_FIELDS) ?? '', (req, res, ctx) => {
     const {
       where: {
-        objectName: { equals: objectName },
+        viewId: { equals: viewId },
       },
     } = req.variables;
 
     return res(
       ctx.data({
         viewFields:
-          objectName === 'company'
-            ? mockedCompanyViewFields
-            : mockedPersonViewFields,
+          viewId === mockedCompanyBoardViews[0].id
+            ? mockedCompanyBoardCardFields
+            : viewId === mockedCompanyTableViews[0].id
+            ? mockedCompanyTableColumns
+            : mockedPersonTableColumns,
       }),
     );
   }),
@@ -246,6 +281,32 @@ export const graphqlMocks = [
       return res(
         ctx.data({
           createOneActivity: mockedTasks[0],
+        }),
+      );
+    },
+  ),
+  graphql.mutation(
+    getOperationName(INSERT_ONE_COMPANY) ?? '',
+    (req, res, ctx) => {
+      return res(
+        ctx.data({
+          createOneCompany: {
+            id: '9d162de1-cfbf-4156-a790-e39854dcd4ef',
+            __typename: 'Company',
+          },
+        }),
+      );
+    },
+  ),
+  graphql.mutation(
+    getOperationName(INSERT_ONE_PERSON) ?? '',
+    (req, res, ctx) => {
+      return res(
+        ctx.data({
+          createOnePerson: {
+            id: '9d162de1-cfbf-4156-a790-e39854dcd4ef',
+            __typename: 'Person',
+          },
         }),
       );
     },

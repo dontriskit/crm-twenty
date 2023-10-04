@@ -1,3 +1,4 @@
+import { ComponentProps, JSX } from 'react';
 import styled from '@emotion/styled';
 import { Decorator } from '@storybook/react';
 
@@ -56,8 +57,9 @@ const StyledRowContainer = styled.div`
   gap: ${({ theme }) => theme.spacing(2)};
 `;
 
-const StyledElementContainer = styled.div`
+const StyledElementContainer = styled.div<{ width: number }>`
   display: flex;
+  ${({ width }) => width && `min-width: ${width}px;`}
 `;
 
 const StyledCellContainer = styled.div`
@@ -67,69 +69,86 @@ const StyledCellContainer = styled.div`
   padding: ${({ theme }) => theme.spacing(2)};
 `;
 
-const emptyVariable = {
+const emptyDimension = {
   name: '',
   values: [undefined],
   props: () => ({}),
+} as CatalogDimension;
+
+export type CatalogDimension<
+  ComponentType extends React.ElementType = () => JSX.Element,
+> = {
+  name: string;
+  values: any[];
+  props: (value: any) => Partial<ComponentProps<ComponentType>>;
+  labels?: (value: any) => string;
+};
+
+export type CatalogOptions = {
+  elementContainer?: {
+    width?: number;
+  };
 };
 
 export const CatalogDecorator: Decorator = (Story, context) => {
   const {
     catalog: { dimensions, options },
   } = context.parameters;
+
   const [
-    variable1,
-    variable2 = emptyVariable,
-    variable3 = emptyVariable,
-    variable4 = emptyVariable,
-  ] = dimensions;
+    dimension1,
+    dimension2 = emptyDimension,
+    dimension3 = emptyDimension,
+    dimension4 = emptyDimension,
+  ] = dimensions as CatalogDimension[];
 
   return (
     <StyledContainer>
-      {variable4.values.map((value4: string) => (
+      {dimension4.values.map((value4: any) => (
         <StyledColumnContainer key={value4}>
-          {(variable4.labels?.(value4) || value4) && (
-            <StyledColumnTitle>
-              {variable4.labels?.(value4) || value4}
-            </StyledColumnTitle>
-          )}
-          {variable3.values.map((value3: string) => (
+          <StyledColumnTitle>
+            {dimension4.labels?.(value4) ??
+              (['string', 'number'].includes(typeof value4) ? value4 : '')}
+          </StyledColumnTitle>
+          {dimension3.values.map((value3: any) => (
             <StyledRowsContainer key={value3}>
-              {(variable3.labels?.(value3) || value3) && (
-                <StyledRowsTitle>
-                  {variable3.labels?.(value3) || value3}
-                </StyledRowsTitle>
-              )}
-              {variable2.values.map((value2: string) => (
+              <StyledRowsTitle>
+                {dimension3.labels?.(value3) ??
+                  (['string', 'number'].includes(typeof value3) ? value3 : '')}
+              </StyledRowsTitle>
+              {dimension2.values.map((value2: any) => (
                 <StyledRowContainer key={value2}>
-                  {(variable2.labels?.(value2) || value2) && (
-                    <StyledRowTitle>
-                      {variable2.labels?.(value2) || value2}
-                    </StyledRowTitle>
-                  )}
-                  {variable1.values.map((value1: string) => (
-                    <StyledCellContainer key={value1} id={value1}>
-                      {(variable1.labels?.(value1) || value1) && (
+                  <StyledRowTitle>
+                    {dimension2.labels?.(value2) ??
+                      (['string', 'number'].includes(typeof value2)
+                        ? value2
+                        : '')}
+                  </StyledRowTitle>
+                  {dimension1.values.map((value1: any) => {
+                    return (
+                      <StyledCellContainer key={value1} id={value1}>
                         <StyledElementTitle>
-                          {variable1.labels?.(value1) || value1}
+                          {dimension1.labels?.(value1) ??
+                            (['string', 'number'].includes(typeof value1)
+                              ? value1
+                              : '')}
                         </StyledElementTitle>
-                      )}
-
-                      <StyledElementContainer
-                        {...options?.StyledelementContainer}
-                      >
-                        <Story
-                          args={{
-                            ...context.args,
-                            ...variable1.props(value1),
-                            ...variable2.props(value2),
-                            ...variable3.props(value3),
-                            ...variable4.props(value4),
-                          }}
-                        />
-                      </StyledElementContainer>
-                    </StyledCellContainer>
-                  ))}
+                        <StyledElementContainer
+                          width={options?.elementContainer?.width}
+                        >
+                          <Story
+                            args={{
+                              ...context.args,
+                              ...dimension1.props(value1),
+                              ...dimension2.props(value2),
+                              ...dimension3.props(value3),
+                              ...dimension4.props(value4),
+                            }}
+                          />
+                        </StyledElementContainer>
+                      </StyledCellContainer>
+                    );
+                  })}
                 </StyledRowContainer>
               ))}
             </StyledRowsContainer>

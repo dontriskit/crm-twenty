@@ -1,8 +1,12 @@
 import { useCallback } from 'react';
 import styled from '@emotion/styled';
 import { motion } from 'framer-motion';
+import { Key } from 'ts-key-enum';
 
-import { Button, ButtonVariant } from '@/ui/button/components/Button';
+import { Button } from '@/ui/button/components/Button';
+import { useScopedHotkeys } from '@/ui/utilities/hotkey/hooks/useScopedHotkeys';
+
+import { DialogHotkeyScope } from '../types/DialogHotkeyScope';
 
 const StyledDialogOverlay = styled(motion.div)`
   align-items: center;
@@ -52,7 +56,12 @@ const StyledDialogButton = styled(Button)`
 export type DialogButtonOptions = Omit<
   React.ComponentProps<typeof Button>,
   'fullWidth'
->;
+> & {
+  onClick?: (
+    event: React.MouseEvent<HTMLButtonElement, MouseEvent> | KeyboardEvent,
+  ) => void;
+  role?: 'confirm';
+};
 
 export type DialogProps = React.ComponentPropsWithoutRef<typeof motion.div> & {
   title?: string;
@@ -63,7 +72,7 @@ export type DialogProps = React.ComponentPropsWithoutRef<typeof motion.div> & {
   onClose?: () => void;
 };
 
-export function Dialog({
+export const Dialog = ({
   title,
   message,
   buttons = [],
@@ -71,7 +80,7 @@ export function Dialog({
   children,
   onClose,
   ...rootProps
-}: DialogProps) {
+}: DialogProps) => {
   const closeSnackbar = useCallback(() => {
     onClose && onClose();
   }, [onClose]);
@@ -85,6 +94,32 @@ export function Dialog({
     open: { y: 0 },
     closed: { y: '50vh' },
   };
+
+  useScopedHotkeys(
+    Key.Enter,
+    (event: KeyboardEvent) => {
+      const confirmButton = buttons.find((button) => button.role === 'confirm');
+
+      event.preventDefault();
+
+      if (confirmButton) {
+        confirmButton?.onClick?.(event);
+        closeSnackbar();
+      }
+    },
+    DialogHotkeyScope.Dialog,
+    [],
+  );
+
+  useScopedHotkeys(
+    Key.Escape,
+    (event: KeyboardEvent) => {
+      event.preventDefault();
+      closeSnackbar();
+    },
+    DialogHotkeyScope.Dialog,
+    [],
+  );
 
   return (
     <StyledDialogOverlay
@@ -102,6 +137,7 @@ export function Dialog({
       <StyledDialogContainer
         variants={containerVariants}
         transition={{ damping: 15, stiffness: 100 }}
+        // eslint-disable-next-line twenty/no-spread-props
         {...rootProps}
       >
         {title && <StyledDialogTitle>{title}</StyledDialogTitle>}
@@ -110,16 +146,17 @@ export function Dialog({
         {buttons.map((button) => (
           <StyledDialogButton
             key={button.title}
-            onClick={(e) => {
-              button?.onClick?.(e);
+            onClick={(event) => {
+              button?.onClick?.(event);
               closeSnackbar();
             }}
             fullWidth={true}
-            variant={button.variant ?? ButtonVariant.Secondary}
+            variant={button.variant ?? 'secondary'}
+            // eslint-disable-next-line twenty/no-spread-props
             {...button}
           />
         ))}
       </StyledDialogContainer>
     </StyledDialogOverlay>
   );
-}
+};

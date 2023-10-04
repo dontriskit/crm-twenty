@@ -1,4 +1,5 @@
 import { useApolloClient } from '@apollo/client';
+import { getOperationName } from '@apollo/client/utilities';
 
 import { useFilteredSearchEntityQuery } from '@/search/hooks/useFilteredSearchEntityQuery';
 import { SingleEntitySelect } from '@/ui/input/relation-picker/components/SingleEntitySelect';
@@ -8,12 +9,14 @@ import { Entity } from '@/ui/input/relation-picker/types/EntityTypeForSelect';
 import { useRecoilScopedState } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedState';
 import {
   Activity,
+  useGetWorkspaceMembersLazyQuery,
   User,
   useSearchUserQuery,
   useUpdateActivityMutation,
 } from '~/generated/graphql';
 
 import { ACTIVITY_UPDATE_FRAGMENT } from '../graphql/fragments/activityUpdateFragment';
+import { GET_ACTIVITIES } from '../graphql/queries/getActivities';
 
 export type OwnProps = {
   activity: Pick<Activity, 'id'> & {
@@ -27,20 +30,26 @@ type UserForSelect = EntityForSelect & {
   entityType: Entity.User;
 };
 
-export function ActivityAssigneePicker({
+export const ActivityAssigneePicker = ({
   activity,
   onSubmit,
   onCancel,
-}: OwnProps) {
-  const [searchFilter] = useRecoilScopedState(
+}: OwnProps) => {
+  const [relationPickerSearchFilter] = useRecoilScopedState(
     relationPickerSearchFilterScopedState,
   );
   const [updateActivity] = useUpdateActivityMutation();
+  const [getWorkspaceMember] = useGetWorkspaceMembersLazyQuery();
 
   const users = useFilteredSearchEntityQuery({
     queryHook: useSearchUserQuery,
-    selectedIds: activity?.accountOwner?.id ? [activity?.accountOwner?.id] : [],
-    searchFilter: searchFilter,
+    filters: [
+      {
+        fieldNames: ['firstName', 'lastName'],
+        filter: relationPickerSearchFilter,
+      },
+    ],
+    orderByField: 'firstName',
     mappingFunction: (user) => ({
       entityType: Entity.User,
       id: user.id,
@@ -49,9 +58,9 @@ export function ActivityAssigneePicker({
       lastName: user.lastName,
       avatarType: 'rounded',
       avatarUrl: user.avatarUrl ?? '',
+      originalEntity: user,
     }),
-    orderByField: 'firstName',
-    searchOnFields: ['firstName', 'lastName'],
+    selectedIds: activity?.accountOwner?.id ? [activity?.accountOwner?.id] : [],
   });
 
   const client = useApolloClient();
@@ -60,15 +69,28 @@ export function ActivityAssigneePicker({
     fragment: ACTIVITY_UPDATE_FRAGMENT,
   });
 
-  function handleEntitySelected(
+  const handleEntitySelected = async (
     selectedUser: UserForSelect | null | undefined,
-  ) {
+  ) => {
     if (selectedUser) {
+      const workspaceMemberAssignee = (
+        await getWorkspaceMember({
+          variables: {
+            where: {
+              userId: { equals: selectedUser.id },
+            },
+          },
+        })
+      ).data?.workspaceMembers?.[0];
+
       updateActivity({
         variables: {
           where: { id: activity.id },
           data: {
             assignee: { connect: { id: selectedUser.id } },
+            workspaceMemberAssignee: {
+              connect: { id: workspaceMemberAssignee?.id },
+            },
           },
         },
         optimisticResponse: {
@@ -82,21 +104,20 @@ export function ActivityAssigneePicker({
             },
           },
         },
+        refetchQueries: [getOperationName(GET_ACTIVITIES) ?? ''],
       });
     }
 
     onSubmit?.();
-  }
+  };
 
   return (
     <SingleEntitySelect
-      onEntitySelected={handleEntitySelected}
+      entitiesToSelect={users.entitiesToSelect}
+      loading={users.loading}
       onCancel={onCancel}
-      entities={{
-        loading: users.loading,
-        entitiesToSelect: users.entitiesToSelect,
-        selectedEntity: users.selectedEntities[0],
-      }}
+      onEntitySelected={handleEntitySelected}
+      selectedEntity={users.selectedEntities[0]}
     />
   );
-}
+};

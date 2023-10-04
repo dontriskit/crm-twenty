@@ -1,62 +1,95 @@
 import { useRef } from 'react';
 import { Key } from 'ts-key-enum';
 
-import { DropdownMenuItem } from '@/ui/dropdown/components/DropdownMenuItem';
-import { DropdownMenuSelectableItem } from '@/ui/dropdown/components/DropdownMenuSelectableItem';
 import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
-import { OverflowingTextWithTooltip } from '@/ui/tooltip/OverflowingTextWithTooltip';
+import { StyledDropdownMenuSeparator } from '@/ui/dropdown/components/StyledDropdownMenuSeparator';
+import { IconPlus } from '@/ui/icon';
+import { IconComponent } from '@/ui/icon/types/IconComponent';
+import { MenuItem } from '@/ui/menu-item/components/MenuItem';
+import { MenuItemSelect } from '@/ui/menu-item/components/MenuItemSelect';
+import { MenuItemSelectAvatar } from '@/ui/menu-item/components/MenuItemSelectAvatar';
 import { useScopedHotkeys } from '@/ui/utilities/hotkey/hooks/useScopedHotkeys';
 import { Avatar } from '@/users/components/Avatar';
-import { isDefined } from '~/utils/isDefined';
+import { assertNotNull } from '~/utils/assert';
 import { isNonEmptyString } from '~/utils/isNonEmptyString';
 
+import { CreateButtonId, EmptyButtonId } from '../constants';
 import { useEntitySelectScroll } from '../hooks/useEntitySelectScroll';
 import { EntityForSelect } from '../types/EntityForSelect';
 import { RelationPickerHotkeyScope } from '../types/RelationPickerHotkeyScope';
 
 import { DropdownMenuSkeletonItem } from './skeletons/DropdownMenuSkeletonItem';
+import { CreateNewButton } from './CreateNewButton';
 
-export type EntitiesForSingleEntitySelect<
+export type SingleEntitySelectBaseProps<
   CustomEntityForSelect extends EntityForSelect,
 > = {
-  selectedEntity: CustomEntityForSelect;
+  EmptyIcon?: IconComponent;
+  emptyLabel?: string;
   entitiesToSelect: CustomEntityForSelect[];
-  loading: boolean;
+  loading?: boolean;
+  onCancel?: () => void;
+  onEntitySelected: (entity?: CustomEntityForSelect) => void;
+  selectedEntity?: CustomEntityForSelect;
+  onCreate?: () => void;
+  showCreateButton?: boolean;
+  SelectAllIcon?: IconComponent;
+  selectAllLabel?: string;
+  isAllEntitySelected?: boolean;
+  isAllEntitySelectShown?: boolean;
+  onAllEntitySelected?: () => void;
 };
 
-export function SingleEntitySelectBase<
+export const SingleEntitySelectBase = <
   CustomEntityForSelect extends EntityForSelect,
 >({
-  entities,
-  onEntitySelected,
+  EmptyIcon,
+  emptyLabel,
+  entitiesToSelect,
+  loading,
   onCancel,
-}: {
-  entities: EntitiesForSingleEntitySelect<CustomEntityForSelect>;
-  onEntitySelected: (entity: CustomEntityForSelect | null | undefined) => void;
-  onCancel?: () => void;
-}) {
+  onEntitySelected,
+  selectedEntity,
+  onCreate,
+  showCreateButton,
+  SelectAllIcon,
+  selectAllLabel,
+  isAllEntitySelected,
+  isAllEntitySelectShown,
+  onAllEntitySelected,
+}: SingleEntitySelectBaseProps<CustomEntityForSelect>) => {
   const containerRef = useRef<HTMLDivElement>(null);
-  let entitiesInDropdown = isDefined(entities.selectedEntity)
-    ? [entities.selectedEntity, ...(entities.entitiesToSelect ?? [])]
-    : entities.entitiesToSelect ?? [];
 
-  entitiesInDropdown = entitiesInDropdown.filter((entity) =>
-    isNonEmptyString(entity.name),
+  const entitiesInDropdown = [selectedEntity, ...entitiesToSelect].filter(
+    (entity): entity is CustomEntityForSelect =>
+      assertNotNull(entity) && isNonEmptyString(entity.name.trim()),
   );
 
-  const { hoveredIndex, resetScroll } = useEntitySelectScroll({
-    entities: entitiesInDropdown,
+  const { preselectedOptionId, resetScroll } = useEntitySelectScroll({
+    selectableOptionIds: [
+      EmptyButtonId,
+      ...entitiesInDropdown.map((item) => item.id),
+      ...(showCreateButton ? [CreateButtonId] : []),
+    ],
     containerRef,
   });
 
   useScopedHotkeys(
     Key.Enter,
     () => {
-      onEntitySelected(entitiesInDropdown[hoveredIndex]);
+      if (showCreateButton && preselectedOptionId === CreateButtonId) {
+        onCreate?.();
+      } else {
+        const entity = entitiesInDropdown.findIndex(
+          (entity) => entity.id === preselectedOptionId,
+        );
+        onEntitySelected(entitiesInDropdown[entity]);
+      }
+
       resetScroll();
     },
     RelationPickerHotkeyScope.RelationPicker,
-    [entitiesInDropdown, hoveredIndex, onEntitySelected],
+    [entitiesInDropdown, preselectedOptionId, onEntitySelected],
   );
 
   useScopedHotkeys(
@@ -68,35 +101,66 @@ export function SingleEntitySelectBase<
     [onCancel],
   );
 
-  entitiesInDropdown = entitiesInDropdown.filter((entity) =>
-    isNonEmptyString(entity.name.trim()),
-  );
-
   return (
-    <StyledDropdownMenuItemsContainer ref={containerRef} hasMaxHeight>
-      {entities.loading ? (
-        <DropdownMenuSkeletonItem />
-      ) : entitiesInDropdown.length === 0 ? (
-        <DropdownMenuItem>No result</DropdownMenuItem>
-      ) : (
-        entitiesInDropdown?.map((entity, index) => (
-          <DropdownMenuSelectableItem
-            key={entity.id}
-            selected={entities.selectedEntity?.id === entity.id}
-            hovered={hoveredIndex === index}
-            onClick={() => onEntitySelected(entity)}
-          >
-            <Avatar
-              avatarUrl={entity.avatarUrl}
-              colorId={entity.id}
-              placeholder={entity.name}
-              size="md"
-              type={entity.avatarType ?? 'rounded'}
+    <>
+      <StyledDropdownMenuItemsContainer ref={containerRef} hasMaxHeight>
+        {isAllEntitySelectShown && selectAllLabel && onAllEntitySelected && (
+          <MenuItemSelect
+            onClick={() => onAllEntitySelected()}
+            LeftIcon={SelectAllIcon}
+            text={selectAllLabel}
+            hovered={preselectedOptionId === EmptyButtonId}
+            selected={!!isAllEntitySelected}
+          />
+        )}
+        {emptyLabel && (
+          <MenuItemSelect
+            onClick={() => onEntitySelected()}
+            LeftIcon={EmptyIcon}
+            text={emptyLabel}
+            hovered={preselectedOptionId === EmptyButtonId}
+            selected={!selectedEntity}
+          />
+        )}
+        {loading ? (
+          <DropdownMenuSkeletonItem />
+        ) : entitiesInDropdown.length === 0 && !isAllEntitySelectShown ? (
+          <MenuItem text="No result" />
+        ) : (
+          entitiesInDropdown?.map((entity) => (
+            <MenuItemSelectAvatar
+              key={entity.id}
+              testId="menu-item"
+              selected={selectedEntity?.id === entity.id}
+              onClick={() => onEntitySelected(entity)}
+              text={entity.name}
+              hovered={preselectedOptionId === entity.id}
+              avatar={
+                <Avatar
+                  avatarUrl={entity.avatarUrl}
+                  colorId={entity.id}
+                  placeholder={entity.name}
+                  size="md"
+                  type={entity.avatarType ?? 'rounded'}
+                />
+              }
             />
-            <OverflowingTextWithTooltip text={entity.name} />
-          </DropdownMenuSelectableItem>
-        ))
+          ))
+        )}
+      </StyledDropdownMenuItemsContainer>
+      {showCreateButton && (
+        <>
+          <StyledDropdownMenuItemsContainer hasMaxHeight>
+            <StyledDropdownMenuSeparator />
+            <CreateNewButton
+              onClick={onCreate}
+              LeftIcon={IconPlus}
+              text="Add New"
+              hovered={preselectedOptionId === CreateButtonId}
+            />
+          </StyledDropdownMenuItemsContainer>
+        </>
       )}
-    </StyledDropdownMenuItemsContainer>
+    </>
   );
-}
+};

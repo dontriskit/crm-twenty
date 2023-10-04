@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 
 import { ActivityAssigneePicker } from '@/activities/components/ActivityAssigneePicker';
-import { useEditableField } from '@/ui/editable-field/hooks/useEditableField';
+import { useInlineCell } from '@/ui/inline-cell/hooks/useInlineCell';
 import { Activity, User } from '~/generated/graphql';
 
 const StyledContainer = styled.div`
@@ -18,22 +18,22 @@ export type OwnProps = {
   onCancel?: () => void;
 };
 
-export function ActivityAssigneeEditableFieldEditMode({
+export const ActivityAssigneeEditableFieldEditMode = ({
   activity,
   onSubmit,
   onCancel,
-}: OwnProps) {
-  const { closeEditableField } = useEditableField();
+}: OwnProps) => {
+  const { closeInlineCell: closeEditableField } = useInlineCell();
 
-  function handleSubmit() {
+  const handleSubmit = () => {
     closeEditableField();
     onSubmit?.();
-  }
+  };
 
-  function handleCancel() {
+  const handleCancel = () => {
     closeEditableField();
     onCancel?.();
-  }
+  };
 
   return (
     <StyledContainer>
@@ -44,4 +44,4 @@ export function ActivityAssigneeEditableFieldEditMode({
       />
     </StyledContainer>
   );
-}
+};

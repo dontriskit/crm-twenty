@@ -78,6 +78,10 @@ export class AbilityFactory {
     can(AbilityAction.Read, 'WorkspaceMember', { workspaceId: workspace.id });
     can(AbilityAction.Delete, 'WorkspaceMember', { workspaceId: workspace.id });
     cannot(AbilityAction.Delete, 'WorkspaceMember', { userId: user.id });
+    can(AbilityAction.Update, 'WorkspaceMember', {
+      userId: user.id,
+      workspaceId: workspace.id,
+    });
 
     // Company
     can(AbilityAction.Read, 'Company', { workspaceId: workspace.id });
@@ -126,7 +130,9 @@ export class AbilityFactory {
 
     // PipelineStage
     can(AbilityAction.Read, 'PipelineStage', { workspaceId: workspace.id });
+    can(AbilityAction.Create, 'PipelineStage', { workspaceId: workspace.id });
     can(AbilityAction.Update, 'PipelineStage', { workspaceId: workspace.id });
+    can(AbilityAction.Delete, 'PipelineStage', { workspaceId: workspace.id });
 
     // PipelineProgress
     can(AbilityAction.Read, 'PipelineProgress', { workspaceId: workspace.id });

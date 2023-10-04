@@ -2,8 +2,8 @@ import React from 'react';
 import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 
-import { Button, ButtonVariant } from '@/ui/button/components/Button';
-import { IconFileUpload, IconTrash, IconUpload } from '@/ui/icon';
+import { Button } from '@/ui/button/components/Button';
+import { IconFileUpload, IconTrash, IconUpload, IconX } from '@/ui/icon';
 
 const StyledContainer = styled.div`
   display: flex;
@@ -67,6 +67,12 @@ const StyledText = styled.span`
   font-size: ${({ theme }) => theme.font.size.xs};
 `;
 
+const StyledErrorText = styled.span`
+  color: ${({ theme }) => theme.font.color.danger};
+  font-size: ${({ theme }) => theme.font.size.xs};
+  margin-top: ${({ theme }) => theme.spacing(1)};
+`;
+
 const StyledHiddenFileInput = styled.input`
   display: none;
 `;
@@ -75,16 +81,22 @@ type Props = Omit<React.ComponentProps<'div'>, 'children'> & {
   picture: string | null | undefined;
   onUpload?: (file: File) => void;
   onRemove?: () => void;
+  onAbort?: () => void;
+  isUploading?: boolean;
+  errorMessage?: string | null;
   disabled?: boolean;
 };
 
-export function ImageInput({
+export const ImageInput = ({
   picture,
   onUpload,
   onRemove,
+  onAbort,
+  isUploading = false,
+  errorMessage,
   disabled = false,
   ...restProps
-}: Props) {
+}: Props) => {
   const theme = useTheme();
   const hiddenFileInput = React.useRef<HTMLInputElement>(null);
   const onUploadButtonClick = () => {
@@ -92,6 +104,7 @@ export function ImageInput({
   };
 
   return (
+    // eslint-disable-next-line twenty/no-spread-props
     <StyledContainer {...restProps}>
       <StyledPicture
         withPicture={!!picture}
@@ -112,6 +125,7 @@ export function ImageInput({
           <StyledHiddenFileInput
             type="file"
             ref={hiddenFileInput}
+            accept="image/jpeg, image/png, image/gif" // to desired specification
             onChange={(event) => {
               if (onUpload) {
                 if (event.target.files) {
@@ -120,18 +134,29 @@ export function ImageInput({
               }
             }}
           />
+          {isUploading && onAbort ? (
+            <Button
+              Icon={IconX}
+              onClick={onAbort}
+              variant="secondary"
+              title="Abort"
+              disabled={!picture || disabled}
+              fullWidth
+            />
+          ) : (
+            <Button
+              Icon={IconUpload}
+              onClick={onUploadButtonClick}
+              variant="secondary"
+              title="Upload"
+              disabled={disabled}
+              fullWidth
+            />
+          )}
           <Button
-            icon={<IconUpload size={theme.icon.size.sm} />}
-            onClick={onUploadButtonClick}
-            variant={ButtonVariant.Secondary}
-            title="Upload"
-            disabled={disabled}
-            fullWidth
-          />
-          <Button
-            icon={<IconTrash size={theme.icon.size.sm} />}
+            Icon={IconTrash}
             onClick={onRemove}
-            variant={ButtonVariant.Secondary}
+            variant="secondary"
             title="Remove"
             disabled={!picture || disabled}
             fullWidth
@@ -140,7 +165,8 @@ export function ImageInput({
         <StyledText>
           We support your best PNGs, JPEGs and GIFs portraits under 10MB
         </StyledText>
+        {errorMessage && <StyledErrorText>{errorMessage}</StyledErrorText>}
       </StyledContent>
     </StyledContainer>
   );
-}
+};

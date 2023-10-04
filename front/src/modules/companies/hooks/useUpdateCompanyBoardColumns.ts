@@ -3,8 +3,10 @@ import { useRecoilCallback } from 'recoil';
 import { currentPipelineState } from '@/pipeline/states/currentPipelineState';
 import { boardCardIdsByColumnIdFamilyState } from '@/ui/board/states/boardCardIdsByColumnIdFamilyState';
 import { boardColumnsState } from '@/ui/board/states/boardColumnsState';
+import { savedBoardColumnsState } from '@/ui/board/states/savedBoardColumnsState';
 import { BoardColumnDefinition } from '@/ui/board/types/BoardColumnDefinition';
-import { genericEntitiesFamilyState } from '@/ui/editable-field/states/genericEntitiesFamilyState';
+import { entityFieldsFamilyState } from '@/ui/field/states/entityFieldsFamilyState';
+import { isThemeColor } from '@/ui/theme/utils/castStringAsThemeColor';
 import { Pipeline } from '~/generated/graphql';
 import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
 
@@ -15,8 +17,8 @@ import {
   PipelineProgressForBoard,
 } from '../types/CompanyProgress';
 
-export function useUpdateCompanyBoard() {
-  return useRecoilCallback(
+export const useUpdateCompanyBoard = () =>
+  useRecoilCallback(
     ({ set, snapshot }) =>
       (
         pipeline: Pipeline,
@@ -70,10 +72,7 @@ export function useUpdateCompanyBoard() {
 
           if (!isDeeplyEqual(currentCompanyProgress, companyProgress)) {
             set(companyProgressesFamilyState(id), companyProgress);
-            set(
-              genericEntitiesFamilyState(id),
-              companyProgress.pipelineProgress,
-            );
+            set(entityFieldsFamilyState(id), companyProgress.pipelineProgress);
           }
         }
 
@@ -97,17 +96,26 @@ export function useUpdateCompanyBoard() {
         });
 
         const newBoardColumns: BoardColumnDefinition[] =
-          orderedPipelineStages?.map((pipelineStage) => ({
-            id: pipelineStage.id,
-            title: pipelineStage.name,
-            colorCode: pipelineStage.color,
-            index: pipelineStage.index ?? 0,
-          }));
+          orderedPipelineStages?.map((pipelineStage) => {
+            if (!isThemeColor(pipelineStage.color)) {
+              console.warn(
+                `Color ${pipelineStage.color} is not recognized in useUpdateCompanyBoard.`,
+              );
+            }
 
-        if (!isDeeplyEqual(currentBoardColumns, newBoardColumns)) {
+            return {
+              id: pipelineStage.id,
+              title: pipelineStage.name,
+              colorCode: isThemeColor(pipelineStage.color)
+                ? pipelineStage.color
+                : undefined,
+              index: pipelineStage.index ?? 0,
+            };
+          });
+        if (currentBoardColumns.length === 0) {
           set(boardColumnsState, newBoardColumns);
+          set(savedBoardColumnsState, newBoardColumns);
         }
-
         for (const boardColumn of newBoardColumns) {
           const boardCardIds = pipelineProgresses
             .filter(
@@ -130,4 +138,3 @@ export function useUpdateCompanyBoard() {
       },
     [],
   );
-}

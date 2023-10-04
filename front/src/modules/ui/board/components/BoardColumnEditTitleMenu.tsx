@@ -1,11 +1,17 @@
-import { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useCallback, useState } from 'react';
 import styled from '@emotion/styled';
+import { useRecoilState } from 'recoil';
 
-import { DropdownMenuSelectableItem } from '@/ui/dropdown/components/DropdownMenuSelectableItem';
 import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
 import { StyledDropdownMenuSeparator } from '@/ui/dropdown/components/StyledDropdownMenuSeparator';
+import { IconTrash } from '@/ui/icon';
+import { MenuItem } from '@/ui/menu-item/components/MenuItem';
+import { MenuItemSelectColor } from '@/ui/menu-item/components/MenuItemSelectColor';
+import { ThemeColor } from '@/ui/theme/constants/colors';
 import { textInputStyle } from '@/ui/theme/constants/effects';
 import { debounce } from '~/utils/debounce';
+
+import { boardColumnsState } from '../states/boardColumnsState';
 
 const StyledEditTitleContainer = styled.div`
   --vertical-padding: ${({ theme }) => theme.spacing(1)};
@@ -21,32 +27,34 @@ const StyledEditTitleContainer = styled.div`
 `;
 
 const StyledEditModeInput = styled.input`
-  font-size: ${({ theme }) => theme.font.size.sm};
-
   ${textInputStyle}
 
+  background: ${({ theme }) => theme.background.transparent.lighter};
+  border-color: ${({ theme }) => theme.color.blue};
+  border-radius: ${({ theme }) => theme.border.radius.sm};
+  border-style: solid;
+  border-width: 1px;
+  box-shadow: 0px 0px 0px 3px rgba(25, 97, 237, 0.1);
+  font-size: ${({ theme }) => theme.font.size.sm};
+  height: 100%;
   width: 100%;
 `;
 
 export type BoardColumnEditTitleMenuProps = {
   onClose: () => void;
+  onDelete?: (id: string) => void;
   title: string;
   onTitleEdit: (title: string, color: string) => void;
-  color: string;
+  color: ThemeColor;
+  stageId: string;
 };
 
-const StyledColorSample = styled.div<{ colorName: string }>`
-  background-color: ${({ theme, colorName }) =>
-    theme.tag.background[colorName]};
-  border: 1px solid
-    ${({ theme, colorName }) =>
-      theme.color[colorName as keyof typeof theme.color]};
-  border-radius: ${({ theme }) => theme.border.radius.sm};
-  height: 12px;
-  width: 12px;
-`;
+type ColumnColorOption = {
+  name: string;
+  id: ThemeColor;
+};
 
-export const COLOR_OPTIONS = [
+export const COLUMN_COLOR_OPTIONS: ColumnColorOption[] = [
   { name: 'Green', id: 'green' },
   { name: 'Turquoise', id: 'turquoise' },
   { name: 'Sky', id: 'sky' },
@@ -59,21 +67,52 @@ export const COLOR_OPTIONS = [
   { name: 'Gray', id: 'gray' },
 ];
 
-export function BoardColumnEditTitleMenu({
+export const BoardColumnEditTitleMenu = ({
   onClose,
+  onDelete,
+  stageId,
   onTitleEdit,
   title,
   color,
-}: BoardColumnEditTitleMenuProps) {
+}: BoardColumnEditTitleMenuProps) => {
   const [internalValue, setInternalValue] = useState(title);
+  const [, setBoardColumns] = useRecoilState(boardColumnsState);
   const debouncedOnUpdateTitle = debounce(
     (newTitle) => onTitleEdit(newTitle, color),
     200,
   );
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    setInternalValue(event.target.value);
-    debouncedOnUpdateTitle(event.target.value);
+    const title = event.target.value;
+    setInternalValue(title);
+    debouncedOnUpdateTitle(title);
+
+    setBoardColumns((previousBoardColumns) =>
+      previousBoardColumns.map((column) =>
+        column.id === stageId ? { ...column, title: title } : column,
+      ),
+    );
   };
+
+  const handleColorChange = (newColor: ThemeColor) => {
+    onTitleEdit(title, newColor);
+    onClose();
+    setBoardColumns((previousBoardColumns) =>
+      previousBoardColumns.map((column) =>
+        column.id === stageId
+          ? { ...column, colorCode: newColor ? newColor : 'gray' }
+          : column,
+      ),
+    );
+  };
+
+  const handleDelete = useCallback(() => {
+    setBoardColumns((previousBoardColumns) =>
+      previousBoardColumns.filter((column) => column.id !== stageId),
+    );
+    onDelete?.(stageId);
+    onClose();
+  }, [onClose, onDelete, setBoardColumns, stageId]);
+
   return (
     <StyledDropdownMenuItemsContainer>
       <StyledEditTitleContainer>
@@ -85,19 +124,24 @@ export function BoardColumnEditTitleMenu({
         />
       </StyledEditTitleContainer>
       <StyledDropdownMenuSeparator />
-      {COLOR_OPTIONS.map((colorOption) => (
-        <DropdownMenuSelectableItem
+      {COLUMN_COLOR_OPTIONS.map((colorOption) => (
+        <MenuItemSelectColor
           key={colorOption.name}
           onClick={() => {
-            onTitleEdit(title, colorOption.id);
-            onClose();
+            handleColorChange(colorOption.id);
           }}
+          color={colorOption.id}
           selected={colorOption.id === color}
-        >
-          <StyledColorSample colorName={colorOption.id} />
-          {colorOption.name}
-        </DropdownMenuSelectableItem>
+          text={colorOption.name}
+        />
       ))}
+      <StyledDropdownMenuSeparator />
+      <MenuItem
+        onClick={handleDelete}
+        LeftIcon={IconTrash}
+        text="Delete"
+        accent="danger"
+      />
     </StyledDropdownMenuItemsContainer>
   );
-}
+};

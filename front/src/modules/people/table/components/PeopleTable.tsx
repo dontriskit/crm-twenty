@@ -1,105 +1,102 @@
-import { useCallback, useMemo } from 'react';
-
-import { peopleViewFields } from '@/people/constants/peopleViewFields';
+import { peopleAvailableColumnDefinitions } from '@/people/constants/peopleAvailableColumnDefinitions';
+import { getPeopleOptimisticEffectDefinition } from '@/people/graphql/optimistic-effect-definitions/getPeopleOptimisticEffectDefinition';
 import { usePersonTableContextMenuEntries } from '@/people/hooks/usePeopleTableContextMenuEntries';
 import { usePersonTableActionBarEntries } from '@/people/hooks/usePersonTableActionBarEntries';
 import { useSpreadsheetPersonImport } from '@/people/hooks/useSpreadsheetPersonImport';
-import { filtersScopedState } from '@/ui/filter-n-sort/states/filtersScopedState';
-import { sortsOrderByScopedSelector } from '@/ui/filter-n-sort/states/sortsOrderByScopedSelector';
-import { turnFilterIntoWhereClause } from '@/ui/filter-n-sort/utils/turnFilterIntoWhereClause';
-import { EntityTable } from '@/ui/table/components/EntityTable';
-import { GenericEntityTableData } from '@/ui/table/components/GenericEntityTableData';
-import { useUpsertEntityTableItem } from '@/ui/table/hooks/useUpsertEntityTableItem';
-import { TableRecoilScopeContext } from '@/ui/table/states/recoil-scope-contexts/TableRecoilScopeContext';
+import { EntityTable } from '@/ui/data-table/components/EntityTable';
+import { EntityTableEffect } from '@/ui/data-table/components/EntityTableEffect';
+import { TableContext } from '@/ui/data-table/contexts/TableContext';
+import { useUpsertEntityTableItem } from '@/ui/data-table/hooks/useUpsertEntityTableItem';
+import { TableRecoilScopeContext } from '@/ui/data-table/states/recoil-scope-contexts/TableRecoilScopeContext';
 import { useRecoilScopedValue } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedValue';
-import { useTableViewFields } from '@/views/hooks/useTableViewFields';
+import { ViewBarContext } from '@/ui/view-bar/contexts/ViewBarContext';
+import { filtersWhereScopedSelector } from '@/ui/view-bar/states/selectors/filtersWhereScopedSelector';
+import { sortsOrderByScopedSelector } from '@/ui/view-bar/states/selectors/sortsOrderByScopedSelector';
 import { useTableViews } from '@/views/hooks/useTableViews';
-import { useViewFilters } from '@/views/hooks/useViewFilters';
-import { useViewSorts } from '@/views/hooks/useViewSorts';
 import {
-  SortOrder,
   UpdateOnePersonMutationVariables,
   useGetPeopleQuery,
   useUpdateOnePersonMutation,
 } from '~/generated/graphql';
 import { peopleFilters } from '~/pages/people/people-filters';
-import { availableSorts } from '~/pages/people/people-sorts';
+import { peopleAvailableSorts } from '~/pages/people/people-sorts';
 
-export function PeopleTable() {
-  const orderBy = useRecoilScopedValue(
+export const PeopleTable = () => {
+  const sortsOrderBy = useRecoilScopedValue(
     sortsOrderByScopedSelector,
     TableRecoilScopeContext,
   );
+  const filtersWhere = useRecoilScopedValue(
+    filtersWhereScopedSelector,
+    TableRecoilScopeContext,
+  );
+
   const [updateEntityMutation] = useUpdateOnePersonMutation();
   const upsertEntityTableItem = useUpsertEntityTableItem();
   const { openPersonSpreadsheetImport } = useSpreadsheetPersonImport();
 
-  const objectId = 'person';
-  const { handleViewsChange } = useTableViews({ objectId });
-  const { handleColumnsChange } = useTableViewFields({
-    objectName: objectId,
-    viewFieldDefinitions: peopleViewFields,
+  const {
+    createView,
+    deleteView,
+    persistColumns,
+    submitCurrentView,
+    updateView,
+  } = useTableViews({
+    objectId: 'person',
+    columnDefinitions: peopleAvailableColumnDefinitions,
   });
-  const { persistFilters } = useViewFilters({
-    availableFilters: peopleFilters,
-  });
-  const { persistSorts } = useViewSorts({ availableSorts });
-
-  const filters = useRecoilScopedValue(
-    filtersScopedState,
-    TableRecoilScopeContext,
-  );
-
-  const whereFilters = useMemo(() => {
-    return { AND: filters.map(turnFilterIntoWhereClause) };
-  }, [filters]) as any;
 
   const { setContextMenuEntries } = usePersonTableContextMenuEntries();
   const { setActionBarEntries } = usePersonTableActionBarEntries();
 
-  const handleViewSubmit = useCallback(async () => {
-    await persistFilters();
-    await persistSorts();
-  }, [persistFilters, persistSorts]);
-
-  function handleImport() {
+  const handleImport = () => {
     openPersonSpreadsheetImport();
-  }
+  };
 
   return (
-    <>
-      <GenericEntityTableData
+    <TableContext.Provider value={{ onColumnsChange: persistColumns }}>
+      <EntityTableEffect
         getRequestResultKey="people"
         useGetRequest={useGetPeopleQuery}
-        orderBy={orderBy.length ? orderBy : [{ createdAt: SortOrder.Desc }]}
-        whereFilters={whereFilters}
+        getRequestOptimisticEffectDefinition={
+          getPeopleOptimisticEffectDefinition
+        }
+        orderBy={sortsOrderBy}
+        whereFilters={filtersWhere}
         filterDefinitionArray={peopleFilters}
         setContextMenuEntries={setContextMenuEntries}
         setActionBarEntries={setActionBarEntries}
+        sortDefinitionArray={peopleAvailableSorts}
       />
-      <EntityTable
-        viewName="All People"
-        availableSorts={availableSorts}
-        onColumnsChange={handleColumnsChange}
-        onViewsChange={handleViewsChange}
-        onViewSubmit={handleViewSubmit}
-        onImport={handleImport}
-        updateEntityMutation={({
-          variables,
-        }: {
-          variables: UpdateOnePersonMutationVariables;
-        }) =>
-          updateEntityMutation({
+      <ViewBarContext.Provider
+        value={{
+          defaultViewName: 'All People',
+          onCurrentViewSubmit: submitCurrentView,
+          onViewCreate: createView,
+          onViewEdit: updateView,
+          onViewRemove: deleteView,
+          onImport: handleImport,
+          ViewBarRecoilScopeContext: TableRecoilScopeContext,
+        }}
+      >
+        <EntityTable
+          updateEntityMutation={({
             variables,
-            onCompleted: (data) => {
-              if (!data.updateOnePerson) {
-                return;
-              }
-              upsertEntityTableItem(data.updateOnePerson);
-            },
-          })
-        }
-      />
-    </>
+          }: {
+            variables: UpdateOnePersonMutationVariables;
+          }) =>
+            updateEntityMutation({
+              variables,
+              onCompleted: (data) => {
+                if (!data.updateOnePerson) {
+                  return;
+                }
+                upsertEntityTableItem(data.updateOnePerson);
+              },
+            })
+          }
+        />
+      </ViewBarContext.Provider>
+    </TableContext.Provider>
   );
-}
+};

@@ -1,6 +1,6 @@
-export function canBeCastAsPositiveIntegerOrNull(
+export const canBeCastAsPositiveIntegerOrNull = (
   probablePositiveNumberOrNull: string | undefined | number | null,
-): probablePositiveNumberOrNull is number | null {
+): probablePositiveNumberOrNull is number | null => {
   if (probablePositiveNumberOrNull === undefined) {
     return false;
   }
@@ -8,7 +8,7 @@ export function canBeCastAsPositiveIntegerOrNull(
   if (typeof probablePositiveNumberOrNull === 'number') {
     return (
       Number.isInteger(probablePositiveNumberOrNull) &&
-      Math.sign(probablePositiveNumberOrNull) === 1
+      Math.sign(probablePositiveNumberOrNull) !== -1
     );
   }
 
@@ -27,17 +27,17 @@ export function canBeCastAsPositiveIntegerOrNull(
       return false;
     }
 
-    if (Number.isInteger(stringAsNumber) && Math.sign(stringAsNumber) === 1) {
+    if (Number.isInteger(stringAsNumber) && Math.sign(stringAsNumber) !== -1) {
       return true;
     }
   }
 
   return false;
-}
+};
 
-export function castAsPositiveIntegerOrNull(
+export const castAsPositiveIntegerOrNull = (
   probablePositiveNumberOrNull: string | undefined | number | null,
-): number | null {
+): number | null => {
   if (
     canBeCastAsPositiveIntegerOrNull(probablePositiveNumberOrNull) === false
   ) {
@@ -61,4 +61,4 @@ export function castAsPositiveIntegerOrNull(
   }
 
   return null;
-}
+};

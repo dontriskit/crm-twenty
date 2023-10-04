@@ -1,12 +1,8 @@
 import { useRef } from 'react';
-import { useTheme } from '@emotion/react';
 
-import { DropdownMenuInput } from '@/ui/dropdown/components/DropdownMenuInput';
-import { DropdownMenuItem } from '@/ui/dropdown/components/DropdownMenuItem';
+import { DropdownMenuSearchInput } from '@/ui/dropdown/components/DropdownMenuSearchInput';
 import { StyledDropdownMenu } from '@/ui/dropdown/components/StyledDropdownMenu';
-import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
 import { StyledDropdownMenuSeparator } from '@/ui/dropdown/components/StyledDropdownMenuSeparator';
-import { IconPlus } from '@/ui/icon';
 import { useListenClickOutside } from '@/ui/utilities/pointer-event/hooks/useListenClickOutside';
 import { isDefined } from '~/utils/isDefined';
 
@@ -14,30 +10,37 @@ import { useEntitySelectSearch } from '../hooks/useEntitySelectSearch';
 import { EntityForSelect } from '../types/EntityForSelect';
 
 import {
-  EntitiesForSingleEntitySelect,
   SingleEntitySelectBase,
+  SingleEntitySelectBaseProps,
 } from './SingleEntitySelectBase';
 
-export function SingleEntitySelect<
+export type SingleEntitySelectProps<
+  CustomEntityForSelect extends EntityForSelect,
+> = {
+  disableBackgroundBlur?: boolean;
+  onCreate?: () => void;
+  width?: number;
+} & Pick<
+  SingleEntitySelectBaseProps<CustomEntityForSelect>,
+  | 'EmptyIcon'
+  | 'emptyLabel'
+  | 'entitiesToSelect'
+  | 'loading'
+  | 'onCancel'
+  | 'onEntitySelected'
+  | 'selectedEntity'
+>;
+
+export const SingleEntitySelect = <
   CustomEntityForSelect extends EntityForSelect,
 >({
-  entities,
-  onEntitySelected,
-  onCreate,
-  onCancel,
-  width,
   disableBackgroundBlur = false,
-}: {
-  onCancel?: () => void;
-  onCreate?: () => void;
-  entities: EntitiesForSingleEntitySelect<CustomEntityForSelect>;
-  onEntitySelected: (entity: CustomEntityForSelect | null | undefined) => void;
-  disableBackgroundBlur?: boolean;
-  width?: number;
-}) {
+  onCancel,
+  onCreate,
+  width,
+  ...props
+}: SingleEntitySelectProps<CustomEntityForSelect>) => {
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const theme = useTheme();
 
   const { searchFilter, handleSearchFilterChange } = useEntitySelectSearch();
 
@@ -47,8 +50,6 @@ export function SingleEntitySelect<
     refs: [containerRef],
     callback: (event) => {
       event.stopImmediatePropagation();
-      event.stopPropagation();
-      event.preventDefault();
 
       onCancel?.();
     },
@@ -59,29 +60,21 @@ export function SingleEntitySelect<
       disableBlur={disableBackgroundBlur}
       ref={containerRef}
       width={width}
+      data-select-disable
     >
-      <DropdownMenuInput
+      <DropdownMenuSearchInput
         value={searchFilter}
         onChange={handleSearchFilterChange}
         autoFocus
       />
       <StyledDropdownMenuSeparator />
       <SingleEntitySelectBase
-        entities={entities}
-        onEntitySelected={onEntitySelected}
+        // eslint-disable-next-line twenty/no-spread-props
+        {...props}
         onCancel={onCancel}
+        onCreate={onCreate}
+        showCreateButton={showCreateButton}
       />
-      {showCreateButton && (
-        <>
-          <StyledDropdownMenuItemsContainer hasMaxHeight>
-            <DropdownMenuItem onClick={onCreate}>
-              <IconPlus size={theme.icon.size.md} />
-              Add New
-            </DropdownMenuItem>
-          </StyledDropdownMenuItemsContainer>
-          <StyledDropdownMenuSeparator />
-        </>
-      )}
     </StyledDropdownMenu>
   );
-}
+};

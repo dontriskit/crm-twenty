@@ -12,10 +12,11 @@ export type AvatarSize = 'xl' | 'lg' | 'md' | 'sm' | 'xs';
 
 export type AvatarProps = {
   avatarUrl: string | null | undefined;
-  size: AvatarSize;
+  size?: AvatarSize;
   placeholder: string;
   colorId?: string;
   type?: AvatarType;
+  onClick?: () => void;
 };
 
 const StyledAvatar = styled.div<AvatarProps & { colorId: string }>`
@@ -28,6 +29,7 @@ const StyledAvatar = styled.div<AvatarProps & { colorId: string }>`
   background-size: cover;
   border-radius: ${(props) => (props.type === 'rounded' ? '50%' : '2px')};
   color: ${({ colorId }) => stringToHslColor(colorId, 75, 25)};
+  cursor: ${({ onClick }) => (onClick ? 'pointer' : 'default')};
   display: flex;
 
   flex-shrink: 0;
@@ -79,15 +81,21 @@ const StyledAvatar = styled.div<AvatarProps & { colorId: string }>`
         return '12px';
     }
   }};
+
+  &:hover {
+    box-shadow: ${({ theme, onClick }) =>
+      onClick ? '0 0 0 4px ' + theme.background.transparent.light : 'unset'};
+  }
 `;
 
-export function Avatar({
+export const Avatar = ({
   avatarUrl,
-  size,
+  size = 'md',
   placeholder,
   colorId = placeholder,
+  onClick,
   type = 'squared',
-}: AvatarProps) {
+}: AvatarProps) => {
   const noAvatarUrl = !isNonEmptyString(avatarUrl);
   const [isInvalidAvatarUrl, setIsInvalidAvatarUrl] = useState(false);
 
@@ -111,9 +119,10 @@ export function Avatar({
       size={size}
       type={type}
       colorId={colorId}
+      onClick={onClick}
     >
       {(noAvatarUrl || isInvalidAvatarUrl) &&
         placeholder[0]?.toLocaleUpperCase()}
     </StyledAvatar>
   );
-}
+};

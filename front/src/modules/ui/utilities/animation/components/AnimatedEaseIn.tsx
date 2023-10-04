@@ -7,11 +7,11 @@ type Props = Omit<
   duration?: number;
 };
 
-export function AnimatedEaseIn({
+export const AnimatedEaseIn = ({
   children,
   duration = 0.3,
   ...restProps
-}: Props) {
+}: Props) => {
   const initial = { opacity: 0 };
   const animate = { opacity: 1 };
   const transition = { ease: 'linear', duration };
@@ -21,9 +21,10 @@ export function AnimatedEaseIn({
       initial={initial}
       animate={animate}
       transition={transition}
+      // eslint-disable-next-line twenty/no-spread-props
       {...restProps}
     >
       {children}
     </motion.div>
   );
-}
+};

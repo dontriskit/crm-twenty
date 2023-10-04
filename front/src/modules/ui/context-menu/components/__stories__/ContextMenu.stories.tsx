@@ -1,10 +1,10 @@
 import { MemoryRouter } from 'react-router-dom';
-import type { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react';
 import { useSetRecoilState } from 'recoil';
 
 import { useCompanyTableContextMenuEntries } from '@/companies/hooks/useCompanyTableContextMenuEntries';
 import { CompanyTableMockMode } from '@/companies/table/components/CompanyTableMockMode';
-import { TableRecoilScopeContext } from '@/ui/table/states/recoil-scope-contexts/TableRecoilScopeContext';
+import { TableRecoilScopeContext } from '@/ui/data-table/states/recoil-scope-contexts/TableRecoilScopeContext';
 import { RecoilScope } from '@/ui/utilities/recoil-scope/components/RecoilScope';
 import { ComponentDecorator } from '~/testing/decorators/ComponentDecorator';
 
@@ -12,7 +12,7 @@ import { contextMenuIsOpenState } from '../../states/contextMenuIsOpenState';
 import { contextMenuPositionState } from '../../states/contextMenuPositionState';
 import { ContextMenu } from '../ContextMenu';
 
-function FilledContextMenu(props: { selectedIds: string[] }) {
+const FilledContextMenu = (props: { selectedIds: string[] }) => {
   const { setContextMenuEntries } = useCompanyTableContextMenuEntries();
   setContextMenuEntries();
   const setContextMenuPosition = useSetRecoilState(contextMenuPositionState);
@@ -23,16 +23,16 @@ function FilledContextMenu(props: { selectedIds: string[] }) {
   const setContextMenuOpenState = useSetRecoilState(contextMenuIsOpenState);
   setContextMenuOpenState(true);
   return <ContextMenu selectedIds={props.selectedIds} />;
-}
+};
 
 const meta: Meta<typeof ContextMenu> = {
   title: 'UI/ContextMenu/ContextMenu',
   component: FilledContextMenu,
   decorators: [
     (Story) => (
-      <RecoilScope SpecificContext={TableRecoilScopeContext}>
-        <CompanyTableMockMode></CompanyTableMockMode>
+      <RecoilScope CustomRecoilScopeContext={TableRecoilScopeContext}>
         <MemoryRouter>
+          <CompanyTableMockMode></CompanyTableMockMode>
           <Story />
         </MemoryRouter>
       </RecoilScope>

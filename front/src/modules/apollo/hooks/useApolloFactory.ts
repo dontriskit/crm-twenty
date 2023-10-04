@@ -12,7 +12,7 @@ import { useUpdateEffect } from '~/hooks/useUpdateEffect';
 
 import { ApolloFactory } from '../services/apollo.factory';
 
-export function useApolloFactory() {
+export const useApolloFactory = () => {
   const apolloRef = useRef<ApolloFactory<NormalizedCacheObject> | null>(null);
   const [isDebugMode] = useRecoilState(isDebugModeState);
 
@@ -28,15 +28,16 @@ export function useApolloFactory() {
           Activity: {
             fields: {
               activityTargets: {
-                merge(
+                merge: (
                   _existing: ActivityTarget[] = [],
                   incoming: ActivityTarget[],
-                ) {
+                ) => {
                   return [...incoming];
                 },
               },
             },
           },
+          ViewField: { keyFields: ['viewId', 'key'] },
         },
       }),
       defaultOptions: {
@@ -44,12 +45,13 @@ export function useApolloFactory() {
           fetchPolicy: 'cache-first',
         },
       },
+      connectToDevTools: isDebugMode,
       // We don't want to re-create the client on token change or it will cause infinite loop
       initialTokenPair: tokenPair,
-      onTokenPairChange(tokenPair) {
+      onTokenPairChange: (tokenPair) => {
         setTokenPair(tokenPair);
       },
-      onUnauthenticatedError() {
+      onUnauthenticatedError: () => {
         setTokenPair(null);
         if (
           !isMatchingLocation(AppPath.Verify) &&
@@ -75,4 +77,4 @@ export function useApolloFactory() {
   }, [tokenPair]);
 
   return apolloClient;
-}
+};

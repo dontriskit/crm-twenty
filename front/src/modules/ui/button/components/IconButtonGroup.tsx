@@ -1,39 +1,50 @@
-import React, { type ComponentProps } from 'react';
+import { MouseEvent } from 'react';
 import styled from '@emotion/styled';
 
-import type { IconButtonSize, IconButtonVariant } from './IconButton';
+import { IconComponent } from '@/ui/icon/types/IconComponent';
+
+import { IconButton, IconButtonPosition, IconButtonProps } from './IconButton';
 
 const StyledIconButtonGroupContainer = styled.div`
-  align-items: flex-start;
-  background: ${({ theme }) => theme.background.transparent.primary};
-  border-radius: ${({ theme }) => theme.spacing(1)};
+  border-radius: ${({ theme }) => theme.border.radius.md};
   display: flex;
-  gap: ${({ theme }) => theme.spacing(0.5)};
-  padding: ${({ theme }) => theme.spacing(0.5)};
 `;
 
-export type IconButtonGroupProps = Omit<ComponentProps<'div'>, 'children'> & {
-  variant: IconButtonVariant;
-  size: IconButtonSize;
-  children: React.ReactElement | React.ReactElement[];
+export type IconButtonGroupProps = Pick<
+  IconButtonProps,
+  'accent' | 'size' | 'variant'
+> & {
+  iconButtons: {
+    Icon: IconComponent;
+    onClick?: (event: MouseEvent<any>) => void;
+  }[];
 };
 
-export function IconButtonGroup({
-  children,
-  variant,
+export const IconButtonGroup = ({
+  accent,
+  iconButtons,
   size,
-  ...props
-}: IconButtonGroupProps) {
-  return (
-    <StyledIconButtonGroupContainer {...props}>
-      {React.Children.map(
-        Array.isArray(children) ? children : [children],
-        (child) =>
-          React.cloneElement(child, {
-            ...(variant ? { variant } : {}),
-            ...(size ? { size } : {}),
-          }),
-      )}
-    </StyledIconButtonGroupContainer>
-  );
-}
+  variant,
+}: IconButtonGroupProps) => (
+  <StyledIconButtonGroupContainer>
+    {iconButtons.map(({ Icon, onClick }, index) => {
+      const position: IconButtonPosition =
+        index === 0
+          ? 'left'
+          : index === iconButtons.length - 1
+          ? 'right'
+          : 'middle';
+
+      return (
+        <IconButton
+          accent={accent}
+          Icon={Icon}
+          onClick={onClick}
+          position={position}
+          size={size}
+          variant={variant}
+        />
+      );
+    })}
+  </StyledIconButtonGroupContainer>
+);

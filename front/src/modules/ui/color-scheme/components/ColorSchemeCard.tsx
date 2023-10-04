@@ -100,19 +100,18 @@ export type ColorSchemeSegmentProps = {
   controls: AnimationControls;
 } & React.ComponentPropsWithoutRef<'div'>;
 
-function ColorSchemeSegment({
+const ColorSchemeSegment = ({
   variant,
   controls,
   ...rest
-}: ColorSchemeSegmentProps) {
-  return (
-    <StyledColorSchemeBackground variant={variant} {...rest}>
-      <StyledColorSchemeContent animate={controls} variant={variant}>
-        Aa
-      </StyledColorSchemeContent>
-    </StyledColorSchemeBackground>
-  );
-}
+}: ColorSchemeSegmentProps) => (
+  // eslint-disable-next-line twenty/no-spread-props
+  <StyledColorSchemeBackground variant={variant} {...rest}>
+    <StyledColorSchemeContent animate={controls} variant={variant}>
+      Aa
+    </StyledColorSchemeContent>
+  </StyledColorSchemeBackground>
+);
 
 const StyledContainer = styled.div`
   position: relative;
@@ -146,28 +145,28 @@ const checkmarkAnimationVariants = {
   exit: { opacity: 0 },
 };
 
-export function ColorSchemeCard({
+export const ColorSchemeCard = ({
   variant,
   selected,
   ...rest
-}: ColorSchemeCardProps) {
+}: ColorSchemeCardProps) => {
   const controls = useAnimation();
 
-  function handleMouseEnter() {
+  const handleMouseEnter = () => {
     controls.start({
       height: 61,
       fontSize: '22px',
       transition: { duration: 0.1 },
     });
-  }
+  };
 
-  function handleMouseLeave() {
+  const handleMouseLeave = () => {
     controls.start({
       height: 56,
       fontSize: '20px',
       transition: { duration: 0.1 },
     });
-  }
+  };
 
   if (variant === 'system') {
     return (
@@ -175,6 +174,7 @@ export function ColorSchemeCard({
         <StyledMixedColorSchemeSegment
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
+          // eslint-disable-next-line twenty/no-spread-props
           {...rest}
         >
           <ColorSchemeSegment
@@ -213,6 +213,7 @@ export function ColorSchemeCard({
         onMouseLeave={handleMouseLeave}
         controls={controls}
         variant={variant}
+        // eslint-disable-next-line twenty/no-spread-props
         {...rest}
       />
       <AnimatePresence>
@@ -231,4 +232,4 @@ export function ColorSchemeCard({
       </AnimatePresence>
     </StyledContainer>
   );
-}
+};

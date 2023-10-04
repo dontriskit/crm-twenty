@@ -13,35 +13,32 @@ export type OwnProps = {
   onCancel?: () => void;
 };
 
-export function CompanyPicker({ companyId, onSubmit, onCancel }: OwnProps) {
-  const [searchFilter, setSearchFilter] = useRecoilScopedState(
-    relationPickerSearchFilterScopedState,
-  );
+export const CompanyPicker = ({ companyId, onSubmit, onCancel }: OwnProps) => {
+  const [relationPickerSearchFilter, setRelationPickerSearchFilter] =
+    useRecoilScopedState(relationPickerSearchFilterScopedState);
 
   const companies = useFilteredSearchCompanyQuery({
-    searchFilter,
+    searchFilter: relationPickerSearchFilter,
     selectedIds: companyId ? [companyId] : [],
   });
 
-  async function handleEntitySelected(
+  const handleEntitySelected = async (
     selectedCompany: EntityForSelect | null | undefined,
-  ) {
+  ) => {
     onSubmit(selectedCompany ?? null);
-  }
+  };
 
   useEffect(() => {
-    setSearchFilter('');
-  }, [setSearchFilter]);
+    setRelationPickerSearchFilter('');
+  }, [setRelationPickerSearchFilter]);
 
   return (
     <SingleEntitySelect
-      onEntitySelected={handleEntitySelected}
+      entitiesToSelect={companies.entitiesToSelect}
+      loading={companies.loading}
       onCancel={onCancel}
-      entities={{
-        loading: companies.loading,
-        entitiesToSelect: companies.entitiesToSelect,
-        selectedEntity: companies.selectedEntities[0],
-      }}
+      onEntitySelected={handleEntitySelected}
+      selectedEntity={companies.selectedEntities[0]}
     />
   );
-}
+};

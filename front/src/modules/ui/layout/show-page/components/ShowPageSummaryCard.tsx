@@ -3,7 +3,7 @@ import { Tooltip } from 'react-tooltip';
 import styled from '@emotion/styled';
 import { v4 as uuidV4 } from 'uuid';
 
-import { Avatar } from '@/users/components/Avatar';
+import { Avatar, AvatarType } from '@/users/components/Avatar';
 import {
   beautifyExactDateTime,
   beautifyPastDateRelativeToNow,
@@ -18,6 +18,7 @@ type OwnProps = {
   date: string;
   renderTitleEditComponent?: () => JSX.Element;
   onUploadPicture?: (file: File) => void;
+  avatarType: AvatarType;
 };
 
 const StyledShowPageSummaryCard = styled.div`
@@ -72,14 +73,15 @@ const StyledFileInput = styled.input`
   display: none;
 `;
 
-export function ShowPageSummaryCard({
+export const ShowPageSummaryCard = ({
   id,
   logoOrAvatar,
   title,
   date,
+  avatarType,
   renderTitleEditComponent,
   onUploadPicture,
-}: OwnProps) {
+}: OwnProps) => {
   const beautifiedCreatedAt =
     date !== '' ? beautifyPastDateRelativeToNow(date) : '';
   const exactCreatedAt = date !== '' ? beautifyExactDateTime(date) : '';
@@ -89,19 +91,20 @@ export function ShowPageSummaryCard({
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) onUploadPicture?.(e.target.files[0]);
   };
-  const onAvatarClick = () => {
-    if (onUploadPicture) inputFileRef?.current?.click?.();
+  const handleAvatarClick = () => {
+    inputFileRef?.current?.click?.();
   };
 
   return (
     <StyledShowPageSummaryCard>
-      <StyledAvatarWrapper onClick={onAvatarClick}>
+      <StyledAvatarWrapper>
         <Avatar
           avatarUrl={logoOrAvatar}
+          onClick={onUploadPicture ? handleAvatarClick : undefined}
           size="xl"
           colorId={id}
           placeholder={title}
-          type="rounded"
+          type={avatarType}
         />
         <StyledFileInput
           ref={inputFileRef}
@@ -129,4 +132,4 @@ export function ShowPageSummaryCard({
       </StyledInfoContainer>
     </StyledShowPageSummaryCard>
   );
-}
+};

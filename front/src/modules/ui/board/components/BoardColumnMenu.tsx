@@ -1,73 +1,185 @@
-import { useRef, useState } from 'react';
+import { useCallback, useContext, useRef, useState } from 'react';
 import styled from '@emotion/styled';
-import { IconPencil } from '@tabler/icons-react';
 import { Key } from 'ts-key-enum';
 
-import { DropdownMenuSelectableItem } from '@/ui/dropdown/components/DropdownMenuSelectableItem';
+import { useCreateCompanyProgress } from '@/companies/hooks/useCreateCompanyProgress';
+import { useFilteredSearchCompanyQuery } from '@/companies/hooks/useFilteredSearchCompanyQuery';
 import { StyledDropdownMenu } from '@/ui/dropdown/components/StyledDropdownMenu';
 import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
-import { icon } from '@/ui/theme/constants/icon';
+import { IconArrowLeft, IconArrowRight, IconPencil, IconPlus } from '@/ui/icon';
+import { SingleEntitySelect } from '@/ui/input/relation-picker/components/SingleEntitySelect';
+import { relationPickerSearchFilterScopedState } from '@/ui/input/relation-picker/states/relationPickerSearchFilterScopedState';
+import { EntityForSelect } from '@/ui/input/relation-picker/types/EntityForSelect';
+import { RelationPickerHotkeyScope } from '@/ui/input/relation-picker/types/RelationPickerHotkeyScope';
+import { MenuItem } from '@/ui/menu-item/components/MenuItem';
+import { useSnackBar } from '@/ui/snack-bar/hooks/useSnackBar';
+import { usePreviousHotkeyScope } from '@/ui/utilities/hotkey/hooks/usePreviousHotkeyScope';
 import { useScopedHotkeys } from '@/ui/utilities/hotkey/hooks/useScopedHotkeys';
 import { useListenClickOutside } from '@/ui/utilities/pointer-event/hooks/useListenClickOutside';
+import { useRecoilScopedState } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedState';
 
+import { BoardColumnContext } from '../contexts/BoardColumnContext';
+import { useBoardColumns } from '../hooks/useBoardColumns';
 import { BoardColumnHotkeyScope } from '../types/BoardColumnHotkeyScope';
 
 import { BoardColumnEditTitleMenu } from './BoardColumnEditTitleMenu';
-
 const StyledMenuContainer = styled.div`
   position: absolute;
+  top: ${({ theme }) => theme.spacing(10)};
   width: 200px;
   z-index: 1;
 `;
 
-type OwnProps = {
+type BoardColumnMenuProps = {
   onClose: () => void;
-  title: string;
-  color: string;
+  onDelete?: (id: string) => void;
   onTitleEdit: (title: string, color: string) => void;
+  stageId: string;
 };
 
-export function BoardColumnMenu({
+type Menu = 'actions' | 'add' | 'title';
+
+export const BoardColumnMenu = ({
   onClose,
+  onDelete,
   onTitleEdit,
-  title,
-  color,
-}: OwnProps) {
-  const [openMenu, setOpenMenu] = useState('actions');
+  stageId,
+}: BoardColumnMenuProps) => {
+  const [currentMenu, setCurrentMenu] = useState('actions');
+  const column = useContext(BoardColumnContext);
+
   const boardColumnMenuRef = useRef(null);
+
+  const { enqueueSnackBar } = useSnackBar();
+  const createCompanyProgress = useCreateCompanyProgress();
+  const { handleMoveBoardColumn } = useBoardColumns();
+
+  const handleCompanySelected = (
+    selectedCompany: EntityForSelect | null | undefined,
+  ) => {
+    if (!selectedCompany?.id) {
+      enqueueSnackBar(
+        'There was a problem with the company selection, please retry.',
+        {
+          variant: 'error',
+        },
+      );
+
+      console.error(
+        'There was a problem with the company selection, please retry.',
+      );
+      return;
+    }
+
+    createCompanyProgress(selectedCompany.id, stageId);
+    closeMenu();
+  };
+
+  const {
+    setHotkeyScopeAndMemorizePreviousScope,
+    goBackToPreviousHotkeyScope,
+  } = usePreviousHotkeyScope();
+
+  const closeMenu = useCallback(() => {
+    goBackToPreviousHotkeyScope();
+    onClose();
+  }, [goBackToPreviousHotkeyScope, onClose]);
+
+  const setMenu = (menu: Menu) => {
+    if (menu === 'add') {
+      setHotkeyScopeAndMemorizePreviousScope(
+        RelationPickerHotkeyScope.RelationPicker,
+      );
+    }
+    setCurrentMenu(menu);
+  };
+  const [relationPickerSearchFilter] = useRecoilScopedState(
+    relationPickerSearchFilterScopedState,
+  );
+  const companies = useFilteredSearchCompanyQuery({
+    searchFilter: relationPickerSearchFilter,
+  });
 
   useListenClickOutside({
     refs: [boardColumnMenuRef],
-    callback: onClose,
+    callback: closeMenu,
   });
 
   useScopedHotkeys(
     [Key.Escape, Key.Enter],
-    onClose,
+    closeMenu,
     BoardColumnHotkeyScope.BoardColumn,
     [],
   );
 
+  if (!column) return <></>;
+
+  const { isFirstColumn, isLastColumn, columnDefinition } = column;
+
+  const handleColumnMoveLeft = () => {
+    closeMenu();
+    if (isFirstColumn) {
+      return;
+    }
+    handleMoveBoardColumn('left', columnDefinition);
+  };
+
+  const handleColumnMoveRight = () => {
+    closeMenu();
+    if (isLastColumn) {
+      return;
+    }
+    handleMoveBoardColumn('right', columnDefinition);
+  };
+
   return (
     <StyledMenuContainer ref={boardColumnMenuRef}>
-      <StyledDropdownMenu>
-        {openMenu === 'actions' && (
+      <StyledDropdownMenu data-select-disable>
+        {currentMenu === 'actions' && (
           <StyledDropdownMenuItemsContainer>
-            <DropdownMenuSelectableItem onClick={() => setOpenMenu('title')}>
-              <IconPencil size={icon.size.md} stroke={icon.stroke.sm} />
-              Rename
-            </DropdownMenuSelectableItem>
+            <MenuItem
+              onClick={() => setMenu('title')}
+              LeftIcon={IconPencil}
+              text="Edit"
+            />
+            <MenuItem
+              LeftIcon={IconArrowLeft}
+              onClick={handleColumnMoveLeft}
+              text="Move left"
+            />
+            <MenuItem
+              LeftIcon={IconArrowRight}
+              onClick={handleColumnMoveRight}
+              text="Move right"
+            />
+            <MenuItem
+              onClick={() => setMenu('add')}
+              LeftIcon={IconPlus}
+              text="New opportunity"
+            />
           </StyledDropdownMenuItemsContainer>
         )}
-        {openMenu === 'title' && (
+        {currentMenu === 'title' && (
           <BoardColumnEditTitleMenu
-            color={color}
-            onClose={onClose}
+            color={columnDefinition.colorCode ?? 'gray'}
+            onClose={closeMenu}
             onTitleEdit={onTitleEdit}
-            title={title}
+            title={columnDefinition.title}
+            onDelete={onDelete}
+            stageId={stageId}
+          />
+        )}
+        {currentMenu === 'add' && (
+          <SingleEntitySelect
+            disableBackgroundBlur
+            entitiesToSelect={companies.entitiesToSelect}
+            loading={companies.loading}
+            onCancel={closeMenu}
+            onEntitySelected={handleCompanySelected}
+            selectedEntity={companies.selectedEntities[0]}
           />
         )}
       </StyledDropdownMenu>
     </StyledMenuContainer>
   );
-}
+};

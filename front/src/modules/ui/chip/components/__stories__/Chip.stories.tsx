@@ -1,7 +1,8 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react';
 
 import { CatalogDecorator } from '~/testing/decorators/CatalogDecorator';
 import { ComponentDecorator } from '~/testing/decorators/ComponentDecorator';
+import { CatalogStory } from '~/testing/types';
 
 import { Chip, ChipAccent, ChipSize, ChipVariant } from '../Chip';
 
@@ -26,7 +27,7 @@ export const Default: Story = {
   decorators: [ComponentDecorator],
 };
 
-export const Catalog: Story = {
+export const Catalog: CatalogStory<Story, typeof Chip> = {
   args: { clickable: true, label: 'Hello' },
   argTypes: {
     size: { control: false },

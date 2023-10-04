@@ -102,7 +102,7 @@ export interface SnackbarProps extends React.ComponentPropsWithoutRef<'div'> {
   onClose?: () => void;
 }
 
-export function SnackBar({
+export const SnackBar = ({
   role = 'status',
   icon: iconComponent,
   message,
@@ -112,7 +112,7 @@ export function SnackBar({
   children,
   onClose,
   ...rootProps
-}: SnackbarProps) {
+}: SnackbarProps) => {
   const theme = useTheme();
 
   const progressBarRef = useRef<ProgressBarControls | null>(null);
@@ -160,6 +160,7 @@ export function SnackBar({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       variant={variant}
+      // eslint-disable-next-line twenty/no-spread-props
       {...rootProps}
     >
       <StyledProgressBarContainer>
@@ -179,4 +180,4 @@ export function SnackBar({
       )}
     </StyledMotionContainer>
   );
-}
+};

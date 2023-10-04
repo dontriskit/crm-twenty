@@ -1,4 +1,4 @@
-import { FieldDefinition } from '@/ui/editable-field/types/FieldDefinition';
+import { FieldDefinition } from '@/ui/field/types/FieldDefinition';
 import {
   FieldDateMetadata,
   FieldMetadata,
@@ -6,7 +6,7 @@ import {
   FieldRelationMetadata,
   FieldTextMetadata,
   FieldURLMetadata,
-} from '@/ui/editable-field/types/FieldMetadata';
+} from '@/ui/field/types/FieldMetadata';
 import {
   IconBrandLinkedin,
   IconBrandX,
@@ -15,15 +15,16 @@ import {
   IconCalendar,
   IconMail,
   IconMap,
+  IconPencil,
   IconPhone,
 } from '@/ui/icon';
 import { Entity } from '@/ui/input/relation-picker/types/EntityTypeForSelect';
 
 export const personShowFieldDefinition: FieldDefinition<FieldMetadata>[] = [
   {
-    id: 'email',
-    label: 'Email',
-    icon: <IconMail />,
+    key: 'email',
+    name: 'Email',
+    Icon: IconMail,
     type: 'text',
     metadata: {
       fieldName: 'email',
@@ -31,49 +32,31 @@ export const personShowFieldDefinition: FieldDefinition<FieldMetadata>[] = [
     },
   } satisfies FieldDefinition<FieldTextMetadata>,
   {
-    id: 'company',
-    label: 'Company',
-    icon: <IconBuildingSkyscraper />,
+    key: 'company',
+    name: 'Company',
+    Icon: IconBuildingSkyscraper,
     type: 'relation',
+    buttonIcon: IconPencil,
     metadata: {
       fieldName: 'company',
       relationType: Entity.Company,
-      useEditButton: true,
     },
   } satisfies FieldDefinition<FieldRelationMetadata>,
   {
-    id: 'phone',
-    label: 'Phone',
-    icon: <IconPhone />,
+    key: 'phone',
+    name: 'Phone',
+    Icon: IconPhone,
     type: 'phone',
     metadata: {
       fieldName: 'phone',
       placeHolder: 'Phone',
     },
+    buttonIcon: IconPencil,
   } satisfies FieldDefinition<FieldPhoneMetadata>,
   {
-    id: 'createdAt',
-    label: 'Created at',
-    icon: <IconCalendar />,
-    type: 'date',
-    metadata: {
-      fieldName: 'createdAt',
-    },
-  } satisfies FieldDefinition<FieldDateMetadata>,
-  {
-    id: 'city',
-    label: 'City',
-    icon: <IconMap />,
-    type: 'text',
-    metadata: {
-      fieldName: 'city',
-      placeHolder: 'City',
-    },
-  } satisfies FieldDefinition<FieldTextMetadata>,
-  {
-    id: 'jobTitle',
-    label: 'Job Title',
-    icon: <IconBriefcase />,
+    key: 'jobTitle',
+    name: 'Job Title',
+    Icon: IconBriefcase,
     type: 'text',
     metadata: {
       fieldName: 'jobTitle',
@@ -81,23 +64,44 @@ export const personShowFieldDefinition: FieldDefinition<FieldMetadata>[] = [
     },
   } satisfies FieldDefinition<FieldTextMetadata>,
   {
-    id: 'linkedinUrl',
-    label: 'Linkedin URL',
-    icon: <IconBrandLinkedin />,
+    key: 'city',
+    name: 'City',
+    Icon: IconMap,
+    type: 'text',
+    metadata: {
+      fieldName: 'city',
+      placeHolder: 'City',
+    },
+  } satisfies FieldDefinition<FieldTextMetadata>,
+  {
+    key: 'linkedinUrl',
+    name: 'Linkedin URL',
+    Icon: IconBrandLinkedin,
     type: 'url',
     metadata: {
       fieldName: 'linkedinUrl',
       placeHolder: 'Linkedin URL',
     },
+    buttonIcon: IconPencil,
   } satisfies FieldDefinition<FieldURLMetadata>,
   {
-    id: 'xUrl',
-    label: 'X URL',
-    icon: <IconBrandX />,
+    key: 'xUrl',
+    name: 'X URL',
+    Icon: IconBrandX,
     type: 'url',
     metadata: {
       fieldName: 'xUrl',
       placeHolder: 'X URL',
     },
+    buttonIcon: IconPencil,
   } satisfies FieldDefinition<FieldURLMetadata>,
+  {
+    key: 'createdAt',
+    name: 'Created at',
+    Icon: IconCalendar,
+    type: 'date',
+    metadata: {
+      fieldName: 'createdAt',
+    },
+  } satisfies FieldDefinition<FieldDateMetadata>,
 ];

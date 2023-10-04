@@ -5,7 +5,7 @@ import { useHandleCheckableActivityTargetChange } from '@/activities/hooks/useHa
 import { flatMapAndSortEntityForSelectArrayOfArrayByName } from '@/activities/utils/flatMapAndSortEntityForSelectArrayByName';
 import { useFilteredSearchCompanyQuery } from '@/companies/hooks/useFilteredSearchCompanyQuery';
 import { useFilteredSearchPeopleQuery } from '@/people/hooks/useFilteredSearchPeopleQuery';
-import { useEditableField } from '@/ui/editable-field/hooks/useEditableField';
+import { useInlineCell } from '@/ui/inline-cell/hooks/useInlineCell';
 import { MultipleEntitySelect } from '@/ui/input/relation-picker/components/MultipleEntitySelect';
 import { Activity, ActivityTarget } from '~/generated/graphql';
 import { assertNotNull } from '~/utils/assert';
@@ -24,7 +24,9 @@ const StyledSelectContainer = styled.div`
   top: -8px;
 `;
 
-export function ActivityRelationEditableFieldEditMode({ activity }: OwnProps) {
+export const ActivityRelationEditableFieldEditMode = ({
+  activity,
+}: OwnProps) => {
   const [searchFilter, setSearchFilter] = useState('');
 
   const initialPeopleIds = useMemo(
@@ -86,7 +88,7 @@ export function ActivityRelationEditableFieldEditMode({ activity }: OwnProps) {
   const handleCheckItemsChange = useHandleCheckableActivityTargetChange({
     activity,
   });
-  const { closeEditableField } = useEditableField();
+  const { closeInlineCell: closeEditableField } = useInlineCell();
 
   const handleSubmit = useCallback(() => {
     handleCheckItemsChange(selectedEntityIds, entitiesToSelect);
@@ -98,9 +100,9 @@ export function ActivityRelationEditableFieldEditMode({ activity }: OwnProps) {
     closeEditableField,
   ]);
 
-  function handleCancel() {
+  const handleCancel = () => {
     closeEditableField();
-  }
+  };
 
   return (
     <StyledSelectContainer>
@@ -120,4 +122,4 @@ export function ActivityRelationEditableFieldEditMode({ activity }: OwnProps) {
       />
     </StyledSelectContainer>
   );
-}
+};

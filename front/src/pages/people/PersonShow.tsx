@@ -1,22 +1,29 @@
-import { useParams } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { getOperationName } from '@apollo/client/utilities';
-import { useTheme } from '@emotion/react';
 
-import { Timeline } from '@/activities/timeline/components/Timeline';
 import { ActivityTargetableEntityType } from '@/activities/types/ActivityTargetableEntity';
 import { useFavorites } from '@/favorites/hooks/useFavorites';
 import { GET_PERSON } from '@/people/graphql/queries/getPerson';
 import { usePersonQuery } from '@/people/hooks/usePersonQuery';
-import { GenericEditableField } from '@/ui/editable-field/components/GenericEditableField';
-import { EditableFieldDefinitionContext } from '@/ui/editable-field/contexts/EditableFieldDefinitionContext';
-import { EditableFieldEntityIdContext } from '@/ui/editable-field/contexts/EditableFieldEntityIdContext';
-import { EditableFieldMutationContext } from '@/ui/editable-field/contexts/EditableFieldMutationContext';
-import { PropertyBox } from '@/ui/editable-field/property-box/components/PropertyBox';
+import { AppPath } from '@/types/AppPath';
+import { DropdownRecoilScopeContext } from '@/ui/dropdown/states/recoil-scope-contexts/DropdownRecoilScopeContext';
+import { FieldContext } from '@/ui/field/contexts/FieldContext';
 import { IconUser } from '@/ui/icon';
-import { WithTopBarContainer } from '@/ui/layout/components/WithTopBarContainer';
+import { InlineCell } from '@/ui/inline-cell/components/InlineCell';
+import { PropertyBox } from '@/ui/inline-cell/property-box/components/PropertyBox';
+import { InlineCellHotkeyScope } from '@/ui/inline-cell/types/InlineCellHotkeyScope';
+import { PageBody } from '@/ui/layout/components/PageBody';
+import { PageContainer } from '@/ui/layout/components/PageContainer';
+import { PageFavoriteButton } from '@/ui/layout/components/PageFavoriteButton';
+import { PageHeader } from '@/ui/layout/components/PageHeader';
+import { ShowPageAddButton } from '@/ui/layout/show-page/components/ShowPageAddButton';
 import { ShowPageLeftContainer } from '@/ui/layout/show-page/components/ShowPageLeftContainer';
 import { ShowPageRightContainer } from '@/ui/layout/show-page/components/ShowPageRightContainer';
 import { ShowPageSummaryCard } from '@/ui/layout/show-page/components/ShowPageSummaryCard';
+import { ShowPageRecoilScopeContext } from '@/ui/layout/states/ShowPageRecoilScopeContext';
+import { PageTitle } from '@/ui/utilities/page-title/PageTitle';
+import { RecoilScope } from '@/ui/utilities/recoil-scope/components/RecoilScope';
 import {
   useUpdateOnePersonMutation,
   useUploadPersonPictureMutation,
@@ -27,22 +34,28 @@ import { ShowPageContainer } from '../../modules/ui/layout/components/ShowPageCo
 
 import { personShowFieldDefinition } from './constants/personShowFieldDefinition';
 
-export function PersonShow() {
+export const PersonShow = () => {
   const personId = useParams().personId ?? '';
   const { insertPersonFavorite, deletePersonFavorite } = useFavorites();
+  const navigate = useNavigate();
 
-  const theme = useTheme();
-  const { data } = usePersonQuery(personId);
+  const { data, loading } = usePersonQuery(personId);
   const person = data?.findUniquePerson;
 
   const [uploadPicture] = useUploadPersonPictureMutation();
+
+  useEffect(() => {
+    if (!loading && !person) {
+      navigate(AppPath.NotFound);
+    }
+  }, [loading, person, navigate]);
 
   if (!person) return <></>;
 
   const isFavorite =
     person.Favorite && person.Favorite?.length > 0 ? true : false;
 
-  async function onUploadPicture(file: File) {
+  const onUploadPicture = async (file: File) => {
     if (!file || !person?.id) {
       return;
     }
@@ -53,61 +66,98 @@ export function PersonShow() {
       },
       refetchQueries: [getOperationName(GET_PERSON) ?? ''],
     });
-  }
+  };
 
-  async function handleFavoriteButtonClick() {
+  const handleFavoriteButtonClick = async () => {
     if (isFavorite) deletePersonFavorite(personId);
     else insertPersonFavorite(personId);
-  }
+  };
 
   return (
-    <WithTopBarContainer
-      title={person.firstName ?? ''}
-      icon={<IconUser size={theme.icon.size.md} />}
-      hasBackButton
-      isFavorite={isFavorite}
-      onFavoriteButtonClick={handleFavoriteButtonClick}
-    >
-      <ShowPageContainer>
-        <ShowPageLeftContainer>
-          <ShowPageSummaryCard
-            id={person.id}
-            title={person.displayName ?? 'No name'}
-            logoOrAvatar={person.avatarUrl ?? undefined}
-            date={person.createdAt ?? ''}
-            renderTitleEditComponent={() =>
-              person ? <PeopleFullNameEditableField people={person} /> : <></>
-            }
-            onUploadPicture={onUploadPicture}
+    <PageContainer>
+      <PageTitle title={person.displayName || 'No Name'} />
+      <PageHeader title={person.firstName ?? ''} Icon={IconUser} hasBackButton>
+        <RecoilScope CustomRecoilScopeContext={DropdownRecoilScopeContext}>
+          <PageFavoriteButton
+            isFavorite={isFavorite}
+            onClick={handleFavoriteButtonClick}
           />
-          <PropertyBox extraPadding={true}>
-            <EditableFieldMutationContext.Provider
-              value={useUpdateOnePersonMutation}
-            >
-              <EditableFieldEntityIdContext.Provider value={person.id}>
-                {personShowFieldDefinition.map((fieldDefinition) => {
-                  return (
-                    <EditableFieldDefinitionContext.Provider
-                      value={fieldDefinition}
-                      key={fieldDefinition.id}
-                    >
-                      <GenericEditableField />
-                    </EditableFieldDefinitionContext.Provider>
-                  );
-                })}
-              </EditableFieldEntityIdContext.Provider>
-            </EditableFieldMutationContext.Provider>
-          </PropertyBox>
-        </ShowPageLeftContainer>
-        <ShowPageRightContainer>
-          <Timeline
+          <ShowPageAddButton
+            key="add"
             entity={{
-              id: person.id ?? '',
+              id: person.id,
               type: ActivityTargetableEntityType.Person,
+              relatedEntities: person.company?.id
+                ? [
+                    {
+                      id: person.company?.id,
+                      type: ActivityTargetableEntityType.Company,
+                    },
+                  ]
+                : undefined,
             }}
           />
-        </ShowPageRightContainer>
-      </ShowPageContainer>
-    </WithTopBarContainer>
+        </RecoilScope>
+      </PageHeader>
+      <PageBody>
+        <RecoilScope CustomRecoilScopeContext={ShowPageRecoilScopeContext}>
+          <ShowPageContainer>
+            <ShowPageLeftContainer>
+              <ShowPageSummaryCard
+                id={person.id}
+                title={person.displayName ?? 'No name'}
+                logoOrAvatar={person.avatarUrl ?? undefined}
+                date={person.createdAt ?? ''}
+                renderTitleEditComponent={() =>
+                  person ? (
+                    <PeopleFullNameEditableField people={person} />
+                  ) : (
+                    <></>
+                  )
+                }
+                onUploadPicture={onUploadPicture}
+                avatarType="rounded"
+              />
+              <PropertyBox extraPadding={true}>
+                {personShowFieldDefinition.map((fieldDefinition) => {
+                  return (
+                    <FieldContext.Provider
+                      value={{
+                        entityId: person.id,
+                        recoilScopeId: person.id + fieldDefinition.name,
+                        fieldDefinition,
+                        useUpdateEntityMutation: useUpdateOnePersonMutation,
+                        hotkeyScope: InlineCellHotkeyScope.InlineCell,
+                      }}
+                      key={person.id + fieldDefinition.name}
+                    >
+                      <InlineCell />
+                    </FieldContext.Provider>
+                  );
+                })}
+              </PropertyBox>
+            </ShowPageLeftContainer>
+            <ShowPageRightContainer
+              entity={{
+                id: person.id ?? '',
+                type: ActivityTargetableEntityType.Person,
+                relatedEntities: person.company?.id
+                  ? [
+                      {
+                        id: person.company?.id,
+                        type: ActivityTargetableEntityType.Company,
+                      },
+                    ]
+                  : undefined,
+              }}
+              timeline
+              tasks
+              notes
+              emails
+            />
+          </ShowPageContainer>
+        </RecoilScope>
+      </PageBody>
+    </PageContainer>
   );
-}
+};

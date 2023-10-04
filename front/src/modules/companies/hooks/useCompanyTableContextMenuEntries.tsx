@@ -1,48 +1,87 @@
-import { IconCheckbox, IconNotes, IconTrash } from '@tabler/icons-react';
-import { useSetRecoilState } from 'recoil';
+import { useRecoilValue, useSetRecoilState } from 'recoil';
 
 import { useOpenCreateActivityDrawerForSelectedRowIds } from '@/activities/hooks/useOpenCreateActivityDrawerForSelectedRowIds';
 import { ActivityTargetableEntityType } from '@/activities/types/ActivityTargetableEntity';
-import { ContextMenuEntry } from '@/ui/context-menu/components/ContextMenuEntry';
+import { useFavorites } from '@/favorites/hooks/useFavorites';
 import { contextMenuEntriesState } from '@/ui/context-menu/states/contextMenuEntriesState';
-import { ActivityType } from '~/generated/graphql';
+import { useResetTableRowSelection } from '@/ui/data-table/hooks/useResetTableRowSelection';
+import { selectedRowIdsSelector } from '@/ui/data-table/states/selectors/selectedRowIdsSelector';
+import {
+  IconCheckbox,
+  IconHeart,
+  IconHeartOff,
+  IconNotes,
+  IconTrash,
+} from '@/ui/icon';
+import { ActivityType, useGetFavoritesQuery } from '~/generated/graphql';
 
 import { useDeleteSelectedComapnies } from './useDeleteCompanies';
 
-export function useCompanyTableContextMenuEntries() {
+export const useCompanyTableContextMenuEntries = () => {
   const setContextMenuEntries = useSetRecoilState(contextMenuEntriesState);
 
   const openCreateActivityRightDrawer =
     useOpenCreateActivityDrawerForSelectedRowIds();
 
-  async function handleButtonClick(type: ActivityType) {
+  const handleButtonClick = async (type: ActivityType) => {
     openCreateActivityRightDrawer(type, ActivityTargetableEntityType.Company);
-  }
+  };
+
+  const selectedRowIds = useRecoilValue(selectedRowIdsSelector);
+
+  const selectedCompanyId =
+    selectedRowIds.length === 1 ? selectedRowIds[0] : '';
+
+  const { insertCompanyFavorite, deleteCompanyFavorite } = useFavorites();
+
+  const resetRowSelection = useResetTableRowSelection();
+
+  const { data } = useGetFavoritesQuery();
+
+  const favorites = data?.findFavorites;
+
+  const isFavorite =
+    !!selectedCompanyId &&
+    !!favorites?.find((favorite) => favorite.company?.id === selectedCompanyId);
+
+  const handleFavoriteButtonClick = () => {
+    resetRowSelection();
+    if (isFavorite) deleteCompanyFavorite(selectedCompanyId);
+    else insertCompanyFavorite(selectedCompanyId);
+  };
 
   const deleteSelectedCompanies = useDeleteSelectedComapnies();
 
   return {
     setContextMenuEntries: () =>
       setContextMenuEntries([
-        <ContextMenuEntry
-          label="Note"
-          icon={<IconNotes size={16} />}
-          onClick={() => handleButtonClick(ActivityType.Note)}
-          key="note"
-        />,
-        <ContextMenuEntry
-          label="Task"
-          icon={<IconCheckbox size={16} />}
-          onClick={() => handleButtonClick(ActivityType.Task)}
-          key="task"
-        />,
-        <ContextMenuEntry
-          label="Delete"
-          icon={<IconTrash size={16} />}
-          accent="danger"
-          onClick={() => deleteSelectedCompanies()}
-          key="delete"
-        />,
+        {
+          label: 'New task',
+          Icon: IconCheckbox,
+          onClick: () => handleButtonClick(ActivityType.Task),
+        },
+        {
+          label: 'New note',
+          Icon: IconNotes,
+          onClick: () => handleButtonClick(ActivityType.Note),
+        },
+        ...(!!selectedCompanyId
+          ? [
+              {
+                label: isFavorite
+                  ? 'Remove from favorites'
+                  : 'Add to favorites',
+                Icon: isFavorite ? IconHeartOff : IconHeart,
+                onClick: () => handleFavoriteButtonClick(),
+              },
+            ]
+          : []),
+        {
+          label: 'Delete',
+          Icon: IconTrash,
+          accent: 'danger',
+          onClick: () => deleteSelectedCompanies(),
+        },
       ]),
   };
-}
+};

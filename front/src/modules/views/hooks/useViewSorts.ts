@@ -1,17 +1,15 @@
 import { useCallback } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 
-import { savedSortsByKeyScopedSelector } from '@/ui/filter-n-sort/states/savedSortsByKeyScopedSelector';
-import { savedSortsScopedState } from '@/ui/filter-n-sort/states/savedSortsScopedState';
-import { sortsScopedState } from '@/ui/filter-n-sort/states/sortsScopedState';
-import type {
-  SelectedSortType,
-  SortType,
-} from '@/ui/filter-n-sort/types/interface';
-import { TableRecoilScopeContext } from '@/ui/table/states/recoil-scope-contexts/TableRecoilScopeContext';
-import { currentTableViewIdState } from '@/ui/table/states/tableViewsState';
+import { RecoilScopeContext } from '@/types/RecoilScopeContext';
 import { useRecoilScopedState } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedState';
 import { useRecoilScopedValue } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedValue';
+import { availableSortsScopedState } from '@/ui/view-bar/states/availableSortsScopedState';
+import { currentViewIdScopedState } from '@/ui/view-bar/states/currentViewIdScopedState';
+import { savedSortsFamilyState } from '@/ui/view-bar/states/savedSortsFamilyState';
+import { savedSortsByKeyFamilySelector } from '@/ui/view-bar/states/selectors/savedSortsByKeyFamilySelector';
+import { sortsScopedState } from '@/ui/view-bar/states/sortsScopedState';
+import { Sort } from '@/ui/view-bar/types/Sort';
 import {
   useCreateViewSortsMutation,
   useDeleteViewSortsMutation,
@@ -21,28 +19,34 @@ import {
 } from '~/generated/graphql';
 import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
 
-export const useViewSorts = <SortField>({
-  availableSorts,
+export const useViewSorts = ({
+  RecoilScopeContext,
+  skipFetch,
 }: {
-  availableSorts: SortType<SortField>[];
+  RecoilScopeContext: RecoilScopeContext;
+  skipFetch?: boolean;
 }) => {
   const currentViewId = useRecoilScopedValue(
-    currentTableViewIdState,
-    TableRecoilScopeContext,
+    currentViewIdScopedState,
+    RecoilScopeContext,
   );
   const [sorts, setSorts] = useRecoilScopedState(
     sortsScopedState,
-    TableRecoilScopeContext,
+    RecoilScopeContext,
+  );
+  const [availableSorts] = useRecoilScopedState(
+    availableSortsScopedState,
+    RecoilScopeContext,
   );
   const [, setSavedSorts] = useRecoilState(
-    savedSortsScopedState(currentViewId),
+    savedSortsFamilyState(currentViewId),
   );
   const savedSortsByKey = useRecoilValue(
-    savedSortsByKeyScopedSelector(currentViewId),
+    savedSortsByKeyFamilySelector(currentViewId),
   );
 
   const { refetch } = useGetViewSortsQuery({
-    skip: !currentViewId,
+    skip: !currentViewId || skipFetch,
     variables: {
       where: {
         viewId: { equals: currentViewId },
@@ -51,19 +55,21 @@ export const useViewSorts = <SortField>({
     onCompleted: (data) => {
       const nextSorts = data.viewSorts
         .map((viewSort) => {
-          const availableSort = availableSorts.find(
+          const foundCorrespondingSortDefinition = availableSorts.find(
             (sort) => sort.key === viewSort.key,
           );
 
-          return availableSort
-            ? {
-                ...availableSort,
-                label: viewSort.name,
-                order: viewSort.direction.toLowerCase(),
-              }
-            : undefined;
+          if (foundCorrespondingSortDefinition) {
+            return {
+              key: viewSort.key,
+              definition: foundCorrespondingSortDefinition,
+              direction: viewSort.direction.toLowerCase(),
+            } as Sort;
+          } else {
+            return undefined;
+          }
         })
-        .filter((sort): sort is SelectedSortType<SortField> => !!sort);
+        .filter((sort): sort is Sort => !!sort);
 
       if (!isDeeplyEqual(sorts, nextSorts)) {
         setSavedSorts(nextSorts);
@@ -77,16 +83,16 @@ export const useViewSorts = <SortField>({
   const [deleteViewSortsMutation] = useDeleteViewSortsMutation();
 
   const createViewSorts = useCallback(
-    (sorts: SelectedSortType<SortField>[]) => {
-      if (!currentViewId || !sorts.length) return;
+    (sorts: Sort[], viewId = currentViewId) => {
+      if (!viewId || !sorts.length) return;
 
       return createViewSortsMutation({
         variables: {
           data: sorts.map((sort) => ({
             key: sort.key,
-            direction: sort.order as ViewSortDirection,
-            name: sort.label,
-            viewId: currentViewId,
+            direction: sort.direction as ViewSortDirection,
+            name: sort.definition.label,
+            viewId,
           })),
         },
       });
@@ -95,7 +101,7 @@ export const useViewSorts = <SortField>({
   );
 
   const updateViewSorts = useCallback(
-    (sorts: SelectedSortType<SortField>[]) => {
+    (sorts: Sort[]) => {
       if (!currentViewId || !sorts.length) return;
 
       return Promise.all(
@@ -103,7 +109,7 @@ export const useViewSorts = <SortField>({
           updateViewSortMutation({
             variables: {
               data: {
-                direction: sort.order as ViewSortDirection,
+                direction: sort.direction as ViewSortDirection,
               },
               where: {
                 viewId_key: { key: sort.key, viewId: currentViewId },
@@ -141,7 +147,7 @@ export const useViewSorts = <SortField>({
     const sortsToUpdate = sorts.filter(
       (sort) =>
         savedSortsByKey[sort.key] &&
-        savedSortsByKey[sort.key].order !== sort.order,
+        savedSortsByKey[sort.key].direction !== sort.direction,
     );
     await updateViewSorts(sortsToUpdate);
 
@@ -162,5 +168,5 @@ export const useViewSorts = <SortField>({
     refetch,
   ]);
 
-  return { persistSorts };
+  return { createViewSorts, persistSorts };
 };

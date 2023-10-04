@@ -1,15 +1,14 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getOperationName } from '@apollo/client/utilities';
-import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { autoUpdate, flip, offset, useFloating } from '@floating-ui/react';
-import { IconDotsVertical, IconLinkOff, IconTrash } from '@tabler/icons-react';
 
-import { IconButton } from '@/ui/button/components/IconButton';
-import { DropdownMenuSelectableItem } from '@/ui/dropdown/components/DropdownMenuSelectableItem';
+import { FloatingIconButton } from '@/ui/button/components/FloatingIconButton';
 import { StyledDropdownMenu } from '@/ui/dropdown/components/StyledDropdownMenu';
 import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
+import { IconDotsVertical, IconLinkOff, IconTrash } from '@/ui/icon';
+import { MenuItem } from '@/ui/menu-item/components/MenuItem';
 import { useListenClickOutside } from '@/ui/utilities/pointer-event/hooks/useListenClickOutside';
 import { Avatar } from '@/users/components/Avatar';
 import {
@@ -72,14 +71,10 @@ const StyledJobTitle = styled.div`
   }
 `;
 
-const StyledRemoveOption = styled.div`
-  color: ${({ theme }) => theme.color.red};
-`;
-
-export function PeopleCard({
+export const PeopleCard = ({
   person,
   hasBottomBorder = true,
-}: PeopleCardProps) {
+}: PeopleCardProps) => {
   const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [isOptionsOpen, setIsOptionsOpen] = useState(false);
@@ -93,8 +88,6 @@ export function PeopleCard({
     placement: 'right-start',
   });
 
-  const theme = useTheme();
-
   useListenClickOutside({
     refs: [refs.floating],
     callback: () => {
@@ -105,22 +98,22 @@ export function PeopleCard({
     },
   });
 
-  function handleMouseEnter() {
+  const handleMouseEnter = () => {
     setIsHovered(true);
-  }
+  };
 
-  function handleMouseLeave() {
+  const handleMouseLeave = () => {
     if (!isOptionsOpen) {
       setIsHovered(false);
     }
-  }
+  };
 
-  function handleToggleOptions(e: React.MouseEvent<HTMLButtonElement>) {
+  const handleToggleOptions = (e: React.MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
     setIsOptionsOpen(!isOptionsOpen);
-  }
+  };
 
-  function handleDetachPerson() {
+  const handleDetachPerson = () => {
     updatePerson({
       variables: {
         where: {
@@ -134,16 +127,16 @@ export function PeopleCard({
       },
       refetchQueries: [getOperationName(GET_PEOPLE) ?? ''],
     });
-  }
+  };
 
-  function handleDeletePerson() {
+  const handleDeletePerson = () => {
     deletePerson({
       variables: {
         ids: person.id,
       },
       refetchQueries: [getOperationName(GET_PEOPLE) ?? ''],
     });
-  }
+  };
 
   return (
     <StyledCard
@@ -165,29 +158,31 @@ export function PeopleCard({
       </StyledCardInfo>
       {isHovered && (
         <div ref={refs.setReference}>
-          <IconButton
+          <FloatingIconButton
             onClick={handleToggleOptions}
-            variant="shadow"
             size="small"
-            icon={<IconDotsVertical size={theme.icon.size.md} />}
+            Icon={IconDotsVertical}
           />
           {isOptionsOpen && (
-            <StyledDropdownMenu ref={refs.setFloating} style={floatingStyles}>
+            <StyledDropdownMenu
+              data-select-disable
+              ref={refs.setFloating}
+              style={floatingStyles}
+            >
               <StyledDropdownMenuItemsContainer
                 onClick={(e) => e.stopPropagation()}
               >
-                <DropdownMenuSelectableItem onClick={handleDetachPerson}>
-                  <IconButton icon={<IconLinkOff size={14} />} size="small" />
-                  Detach relation
-                </DropdownMenuSelectableItem>
-                <DropdownMenuSelectableItem onClick={handleDeletePerson}>
-                  <IconButton
-                    icon={<IconTrash size={14} />}
-                    size="small"
-                    textColor="danger"
-                  />
-                  <StyledRemoveOption>Delete person</StyledRemoveOption>
-                </DropdownMenuSelectableItem>
+                <MenuItem
+                  onClick={handleDetachPerson}
+                  LeftIcon={IconLinkOff}
+                  text="Detach relation"
+                />
+                <MenuItem
+                  onClick={handleDeletePerson}
+                  LeftIcon={IconTrash}
+                  text="Delete person"
+                  accent="danger"
+                />
               </StyledDropdownMenuItemsContainer>
             </StyledDropdownMenu>
           )}
@@ -195,4 +190,4 @@ export function PeopleCard({
       )}
     </StyledCard>
   );
-}
+};

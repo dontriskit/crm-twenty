@@ -5,17 +5,19 @@ export enum ClickOutsideMode {
   dom = 'dom',
 }
 
-export function useListenClickOutside<T extends Element>({
+export const useListenClickOutside = <T extends Element>({
   refs,
   callback,
   mode = ClickOutsideMode.dom,
+  enabled = true,
 }: {
   refs: Array<React.RefObject<T>>;
   callback: (event: MouseEvent | TouchEvent) => void;
   mode?: ClickOutsideMode;
-}) {
+  enabled?: boolean;
+}) => {
   useEffect(() => {
-    function handleClickOutside(event: MouseEvent | TouchEvent) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       if (mode === ClickOutsideMode.dom) {
         const clickedOnAtLeastOneRef = refs
           .filter((ref) => !!ref.current)
@@ -59,20 +61,77 @@ export function useListenClickOutside<T extends Element>({
           callback(event);
         }
       }
-    }
+    };
 
-    document.addEventListener('click', handleClickOutside, { capture: true });
+    if (enabled) {
+      document.addEventListener('click', handleClickOutside, { capture: true });
+      document.addEventListener('touchend', handleClickOutside, {
+        capture: true,
+      });
+
+      return () => {
+        document.removeEventListener('click', handleClickOutside, {
+          capture: true,
+        });
+        document.removeEventListener('touchend', handleClickOutside, {
+          capture: true,
+        });
+      };
+    }
+  }, [refs, callback, mode, enabled]);
+};
+
+export const useListenClickOutsideByClassName = ({
+  classNames,
+  excludeClassNames,
+  callback,
+}: {
+  classNames: string[];
+  excludeClassNames?: string[];
+  callback: () => void;
+}) => {
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!(event.target instanceof Node)) return;
+
+      const clickedElement = event.target as HTMLElement;
+      let isClickedInside = false;
+      let isClickedOnExcluded = false;
+      let currentElement: HTMLElement | null = clickedElement;
+
+      while (currentElement) {
+        const currentClassList = currentElement.classList;
+
+        isClickedInside = classNames.some((className) =>
+          currentClassList.contains(className),
+        );
+        isClickedOnExcluded =
+          excludeClassNames?.some((className) =>
+            currentClassList.contains(className),
+          ) ?? false;
+
+        if (isClickedInside || isClickedOnExcluded) {
+          break;
+        }
+
+        currentElement = currentElement.parentElement;
+      }
+
+      if (!isClickedInside && !isClickedOnExcluded) {
+        callback();
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
     document.addEventListener('touchend', handleClickOutside, {
       capture: true,
     });
 
     return () => {
-      document.removeEventListener('click', handleClickOutside, {
-        capture: true,
-      });
+      document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchend', handleClickOutside, {
         capture: true,
       });
     };
-  }, [refs, callback, mode]);
-}
+  }, [callback, classNames, excludeClassNames]);
+};

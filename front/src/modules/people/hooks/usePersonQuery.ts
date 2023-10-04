@@ -1,16 +1,15 @@
 import { useSetRecoilState } from 'recoil';
 
-import { genericEntitiesFamilyState } from '@/ui/editable-field/states/genericEntitiesFamilyState';
+import { entityFieldsFamilyState } from '@/ui/field/states/entityFieldsFamilyState';
 import { useGetPersonQuery } from '~/generated/graphql';
 
-export function usePersonQuery(id: string) {
-  const updatePersonShowPage = useSetRecoilState(
-    genericEntitiesFamilyState(id),
-  );
+export const usePersonQuery = (id: string) => {
+  const updatePersonShowPage = useSetRecoilState(entityFieldsFamilyState(id));
+
   return useGetPersonQuery({
     variables: { id },
     onCompleted: (data) => {
       updatePersonShowPage(data?.findUniquePerson);
     },
   });
-}
+};

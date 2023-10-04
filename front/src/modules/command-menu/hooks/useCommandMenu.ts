@@ -8,33 +8,31 @@ import { commandMenuCommandsState } from '../states/commandMenuCommandsState';
 import { isCommandMenuOpenedState } from '../states/isCommandMenuOpenedState';
 import { Command } from '../types/Command';
 
-export function useCommandMenu() {
-  const [, setIsCommandMenuOpenedState] = useRecoilState(
-    isCommandMenuOpenedState,
-  );
+export const useCommandMenu = () => {
+  const [, setIsCommandMenuOpened] = useRecoilState(isCommandMenuOpenedState);
   const setCommands = useSetRecoilState(commandMenuCommandsState);
   const {
     setHotkeyScopeAndMemorizePreviousScope,
     goBackToPreviousHotkeyScope,
   } = usePreviousHotkeyScope();
 
-  function openCommandMenu() {
-    setIsCommandMenuOpenedState(true);
+  const openCommandMenu = () => {
+    setIsCommandMenuOpened(true);
     setHotkeyScopeAndMemorizePreviousScope(AppHotkeyScope.CommandMenu);
-  }
+  };
 
-  function closeCommandMenu() {
-    setIsCommandMenuOpenedState(false);
+  const closeCommandMenu = () => {
+    setIsCommandMenuOpened(false);
     goBackToPreviousHotkeyScope();
-  }
+  };
 
-  function addToCommandMenu(addCommand: Command[]) {
+  const addToCommandMenu = (addCommand: Command[]) => {
     setCommands((prev) => [...prev, ...addCommand]);
-  }
+  };
 
-  function setToIntitialCommandMenu() {
+  const setToIntitialCommandMenu = () => {
     setCommands(commandMenuCommands);
-  }
+  };
 
   return {
     openCommandMenu,
@@ -42,4 +40,4 @@ export function useCommandMenu() {
     addToCommandMenu,
     setToIntitialCommandMenu,
   };
-}
+};

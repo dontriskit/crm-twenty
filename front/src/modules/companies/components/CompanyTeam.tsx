@@ -29,6 +29,7 @@ const StyledListContainer = styled.div`
   align-items: flex-start;
   border: 1px solid ${({ theme }) => theme.border.color.medium};
   border-radius: ${({ theme }) => theme.spacing(1)};
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -41,7 +42,7 @@ const StyledTitle = styled.div`
   line-height: ${({ theme }) => theme.text.lineHeight.lg};
 `;
 
-export function CompanyTeam({ company }: CompanyTeamPropsType) {
+export const CompanyTeam = ({ company }: CompanyTeamPropsType) => {
   const { data } = useGetPeopleQuery({
     variables: {
       orderBy: [],
@@ -76,4 +77,4 @@ export function CompanyTeam({ company }: CompanyTeamPropsType) {
       )}
     </>
   );
-}
+};

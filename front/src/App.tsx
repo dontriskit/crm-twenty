@@ -1,37 +1,42 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import { AppPath } from '@/types/AppPath';
 import { SettingsPath } from '@/types/SettingsPath';
 import { DefaultLayout } from '@/ui/layout/components/DefaultLayout';
+import { PageTitle } from '@/ui/utilities/page-title/PageTitle';
+import { CommandMenuEffect } from '~/effect-components/CommandMenuEffect';
+import { GotoHotkeysEffect } from '~/effect-components/GotoHotkeysEffect';
 import { CreateProfile } from '~/pages/auth/CreateProfile';
 import { CreateWorkspace } from '~/pages/auth/CreateWorkspace';
 import { SignInUp } from '~/pages/auth/SignInUp';
-import { Verify } from '~/pages/auth/Verify';
+import { VerifyEffect } from '~/pages/auth/VerifyEffect';
 import { Companies } from '~/pages/companies/Companies';
 import { CompanyShow } from '~/pages/companies/CompanyShow';
-import { Impersonate } from '~/pages/impersonate/Impersonate';
+import { ImpersonateEffect } from '~/pages/impersonate/ImpersonateEffect';
+import { NotFound } from '~/pages/not-found/NotFound';
 import { Opportunities } from '~/pages/opportunities/Opportunities';
 import { People } from '~/pages/people/People';
 import { PersonShow } from '~/pages/people/PersonShow';
 import { SettingsExperience } from '~/pages/settings/SettingsExperience';
+import { SettingsObjects } from '~/pages/settings/SettingsObjects';
 import { SettingsProfile } from '~/pages/settings/SettingsProfile';
 import { SettingsWorkspace } from '~/pages/settings/SettingsWorkspace';
 import { SettingsWorkspaceMembers } from '~/pages/settings/SettingsWorkspaceMembers';
 import { Tasks } from '~/pages/tasks/Tasks';
-import { AppInternalHooks } from '~/sync-hooks/AppInternalHooks';
+import { getPageTitleFromPath } from '~/utils/title-utils';
 
-import { NotFound } from './pages/not-found/NotFound';
+export const App = () => {
+  const { pathname } = useLocation();
+  const pageTitle = getPageTitleFromPath(pathname);
 
-// TEMP FEATURE FLAG FOR VIEW FIELDS
-export const ACTIVATE_VIEW_FIELDS = true;
-
-export function App() {
   return (
     <>
-      <AppInternalHooks />
+      <PageTitle title={pageTitle} />
+      <GotoHotkeysEffect />
+      <CommandMenuEffect />
       <DefaultLayout>
         <Routes>
-          <Route path={AppPath.Verify} element={<Verify />} />
+          <Route path={AppPath.Verify} element={<VerifyEffect />} />
           <Route path={AppPath.SignIn} element={<SignInUp />} />
           <Route path={AppPath.SignUp} element={<SignInUp />} />
           <Route path={AppPath.Invite} element={<SignInUp />} />
@@ -43,7 +48,7 @@ export function App() {
           <Route path={AppPath.CompaniesPage} element={<Companies />} />
           <Route path={AppPath.CompanyShowPage} element={<CompanyShow />} />
           <Route path={AppPath.TasksPage} element={<Tasks />} />
-          <Route path={AppPath.Impersonate} element={<Impersonate />} />
+          <Route path={AppPath.Impersonate} element={<ImpersonateEffect />} />
 
           <Route path={AppPath.OpportunitiesPage} element={<Opportunities />} />
           <Route
@@ -66,6 +71,10 @@ export function App() {
                   path={SettingsPath.Workspace}
                   element={<SettingsWorkspace />}
                 />
+                <Route
+                  path={SettingsPath.Objects}
+                  element={<SettingsObjects />}
+                />
               </Routes>
             }
           />
@@ -74,4 +83,4 @@ export function App() {
       </DefaultLayout>
     </>
   );
-}
+};

@@ -3,7 +3,7 @@ import { useFilteredSearchEntityQuery } from '@/search/hooks/useFilteredSearchEn
 import { useSearchCompanyQuery } from '~/generated/graphql';
 import { getLogoUrlFromDomainName } from '~/utils';
 
-export function useFilteredSearchCompanyQuery({
+export const useFilteredSearchCompanyQuery = ({
   searchFilter,
   selectedIds = [],
   limit,
@@ -11,12 +11,16 @@ export function useFilteredSearchCompanyQuery({
   searchFilter: string;
   selectedIds?: string[];
   limit?: number;
-}) {
+}) => {
   return useFilteredSearchEntityQuery({
     queryHook: useSearchCompanyQuery,
-    searchOnFields: ['name'],
+    filters: [
+      {
+        fieldNames: ['name'],
+        filter: searchFilter,
+      },
+    ],
     orderByField: 'name',
-    selectedIds: selectedIds,
     mappingFunction: (company) => ({
       id: company.id,
       entityType: ActivityTargetableEntityType.Company,
@@ -24,8 +28,9 @@ export function useFilteredSearchCompanyQuery({
       avatarUrl: getLogoUrlFromDomainName(company.domainName),
       domainName: company.domainName,
       avatarType: 'squared',
+      originalEntity: company,
     }),
-    searchFilter,
+    selectedIds: selectedIds,
     limit,
   });
-}
+};

@@ -10,27 +10,27 @@ type SpreadsheetImportProviderProps = React.PropsWithChildren;
 export const SpreadsheetImportProvider = (
   props: SpreadsheetImportProviderProps,
 ) => {
-  const [spreadsheetImportInternalState, setSpreadsheetImportInternalState] =
-    useRecoilState(spreadsheetImportState);
+  const [spreadsheetImport, setSpreadsheetImport] = useRecoilState(
+    spreadsheetImportState,
+  );
 
-  function handleClose() {
-    setSpreadsheetImportInternalState({
+  const handleClose = () => {
+    setSpreadsheetImport({
       isOpen: false,
       options: null,
     });
-  }
+  };
 
   return (
     <>
       {props.children}
-      {spreadsheetImportInternalState.isOpen &&
-        spreadsheetImportInternalState.options && (
-          <SpreadsheetImport
-            isOpen={true}
-            onClose={handleClose}
-            {...spreadsheetImportInternalState.options}
-          />
-        )}
+      {spreadsheetImport.isOpen && spreadsheetImport.options && (
+        <SpreadsheetImport
+          isOpen={true}
+          onClose={handleClose}
+          {...spreadsheetImport.options}
+        />
+      )}
     </>
   );
 };

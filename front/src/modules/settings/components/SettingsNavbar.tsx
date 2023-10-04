@@ -1,11 +1,11 @@
 import { useCallback } from 'react';
 import { useMatch, useNavigate, useResolvedPath } from 'react-router-dom';
-import { useTheme } from '@emotion/react';
 
 import { useAuth } from '@/auth/hooks/useAuth';
 import { AppPath } from '@/types/AppPath';
 import {
   IconColorSwatch,
+  IconHierarchy2,
   IconLogout,
   IconSettings,
   IconUserCircle,
@@ -15,8 +15,7 @@ import NavItem from '@/ui/navbar/components/NavItem';
 import NavTitle from '@/ui/navbar/components/NavTitle';
 import SubMenuNavbar from '@/ui/navbar/components/SubMenuNavbar';
 
-export function SettingsNavbar() {
-  const theme = useTheme();
+export const SettingsNavbar = () => {
   const navigate = useNavigate();
 
   const { signOut } = useAuth();
@@ -32,7 +31,7 @@ export function SettingsNavbar() {
       <NavItem
         label="Profile"
         to="/settings/profile"
-        icon={<IconUserCircle size={theme.icon.size.md} />}
+        Icon={IconUserCircle}
         active={
           !!useMatch({
             path: useResolvedPath('/settings/profile').pathname,
@@ -43,7 +42,7 @@ export function SettingsNavbar() {
       <NavItem
         label="Experience"
         to="/settings/profile/experience"
-        icon={<IconColorSwatch size={theme.icon.size.md} />}
+        Icon={IconColorSwatch}
         active={
           !!useMatch({
             path: useResolvedPath('/settings/profile/experience').pathname,
@@ -55,7 +54,7 @@ export function SettingsNavbar() {
       <NavItem
         label="General"
         to="/settings/workspace"
-        icon={<IconSettings size={theme.icon.size.md} />}
+        Icon={IconSettings}
         active={
           !!useMatch({
             path: useResolvedPath('/settings/workspace').pathname,
@@ -66,7 +65,7 @@ export function SettingsNavbar() {
       <NavItem
         label="Members"
         to="/settings/workspace-members"
-        icon={<IconUsers size={theme.icon.size.md} />}
+        Icon={IconUsers}
         active={
           !!useMatch({
             path: useResolvedPath('/settings/workspace-members').pathname,
@@ -74,12 +73,19 @@ export function SettingsNavbar() {
           })
         }
       />
-      <NavTitle label="Other" />
       <NavItem
-        label="Logout"
-        onClick={handleLogout}
-        icon={<IconLogout size={theme.icon.size.md} />}
+        label="Data model"
+        to="/settings/objects"
+        Icon={IconHierarchy2}
+        active={
+          !!useMatch({
+            path: useResolvedPath('/settings/objects').pathname,
+            end: true,
+          })
+        }
       />
+      <NavTitle label="Other" />
+      <NavItem label="Logout" onClick={handleLogout} Icon={IconLogout} />
     </SubMenuNavbar>
   );
-}
+};

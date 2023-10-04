@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from '@emotion/styled';
 
-import type { Columns } from '../MatchColumnsStep';
+import { Columns } from '../MatchColumnsStep';
 
 const StyledGridContainer = styled.div`
   align-items: center;
@@ -19,7 +19,7 @@ const StyledGrid = styled.div`
   display: flex;
   flex-direction: column;
   margin-top: ${({ theme }) => theme.spacing(8)};
-  width: 75%;
+  width: 100%;
 `;
 
 type HeightProps = {

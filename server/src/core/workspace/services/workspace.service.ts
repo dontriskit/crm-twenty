@@ -1,15 +1,17 @@
 import { Injectable } from '@nestjs/common';
 
-import { v4 } from 'uuid';
 import { Prisma } from '@prisma/client';
+import { v4 } from 'uuid';
 
-import { PipelineStageService } from 'src/core/pipeline/services/pipeline-stage.service';
-import { PipelineProgressService } from 'src/core/pipeline/services/pipeline-progress.service';
-import { PipelineService } from 'src/core/pipeline/services/pipeline.service';
-import { PrismaService } from 'src/database/prisma.service';
 import { CompanyService } from 'src/core/company/company.service';
 import { PersonService } from 'src/core/person/person.service';
+import { PipelineProgressService } from 'src/core/pipeline/services/pipeline-progress.service';
+import { PipelineStageService } from 'src/core/pipeline/services/pipeline-stage.service';
+import { PipelineService } from 'src/core/pipeline/services/pipeline.service';
+import { ViewService } from 'src/core/view/services/view.service';
+import { PrismaService } from 'src/database/prisma.service';
 import { assert } from 'src/utils/assert';
+import { DataSourceService } from 'src/metadata/data-source/data-source.service';
 
 @Injectable()
 export class WorkspaceService {
@@ -20,6 +22,8 @@ export class WorkspaceService {
     private readonly personService: PersonService,
     private readonly pipelineStageService: PipelineStageService,
     private readonly pipelineProgressService: PipelineProgressService,
+    private readonly viewService: ViewService,
+    private readonly dataSourceService: DataSourceService,
   ) {}
 
   // Find
@@ -61,6 +65,9 @@ export class WorkspaceService {
       },
     });
 
+    // Create workspace schema
+    await this.dataSourceService.createWorkspaceSchema(workspace.id);
+
     // Create default companies
     const companies = await this.companyService.createDefaultCompanies({
       workspaceId: workspace.id,
@@ -80,6 +87,11 @@ export class WorkspaceService {
     // Create default stages
     await this.pipelineStageService.createDefaultPipelineStages({
       pipelineId: pipeline.id,
+      workspaceId: workspace.id,
+    });
+
+    // Create default views
+    await this.viewService.createDefaultViews({
       workspaceId: workspace.id,
     });
 

@@ -9,49 +9,19 @@ import {
   size,
   useFloating,
 } from '@floating-ui/react';
-import { TablerIconsProps } from '@tabler/icons-react';
 import debounce from 'lodash.debounce';
 import { ReadonlyDeep } from 'type-fest';
 
-import type { SelectOption } from '@/spreadsheet-import/types';
-import { DropdownMenuInput } from '@/ui/dropdown/components/DropdownMenuInput';
-import { DropdownMenuItem } from '@/ui/dropdown/components/DropdownMenuItem';
-import { DropdownMenuSelectableItem } from '@/ui/dropdown/components/DropdownMenuSelectableItem';
+import { SelectOption } from '@/spreadsheet-import/types';
+import { DropdownMenuSearchInput } from '@/ui/dropdown/components/DropdownMenuSearchInput';
 import { StyledDropdownMenu } from '@/ui/dropdown/components/StyledDropdownMenu';
 import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
 import { StyledDropdownMenuSeparator } from '@/ui/dropdown/components/StyledDropdownMenuSeparator';
-import { IconChevronDown } from '@/ui/icon';
+import { MenuItem } from '@/ui/menu-item/components/MenuItem';
+import { MenuItemSelect } from '@/ui/menu-item/components/MenuItemSelect';
 import { AppTooltip } from '@/ui/tooltip/AppTooltip';
 import { useListenClickOutside } from '@/ui/utilities/pointer-event/hooks/useListenClickOutside';
 import { useUpdateEffect } from '~/hooks/useUpdateEffect';
-
-const StyledDropdownItem = styled.div`
-  align-items: center;
-  background-color: ${({ theme }) => theme.background.tertiary};
-  border-radius: ${({ theme }) => theme.border.radius.sm};
-  box-sizing: border-box;
-  display: flex;
-  flex-direction: row;
-  height: 32px;
-  padding-left: ${({ theme }) => theme.spacing(2)};
-  padding-right: ${({ theme }) => theme.spacing(2)};
-  width: 100%;
-
-  &:hover {
-    background-color: ${({ theme }) => theme.background.quaternary};
-  }
-`;
-
-const StyledDropdownLabel = styled.span<{ isPlaceholder: boolean }>`
-  color: ${({ theme, isPlaceholder }) =>
-    isPlaceholder ? theme.font.color.tertiary : theme.font.color.primary};
-  display: flex;
-  flex: 1;
-  font-size: ${({ theme }) => theme.font.size.sm};
-  font-weight: ${({ theme }) => theme.font.weight.regular};
-  padding-left: ${({ theme }) => theme.spacing(1)};
-  padding-right: ${({ theme }) => theme.spacing(1)};
-`;
 
 const StyledFloatingDropdown = styled.div`
   z-index: ${({ theme }) => theme.lastLayerZIndex};
@@ -70,11 +40,9 @@ export const MatchColumnSelect = ({
   value,
   options: initialOptions,
   placeholder,
-  name,
 }: Props) => {
   const theme = useTheme();
 
-  const dropdownItemRef = useRef<HTMLDivElement>(null);
   const dropdownContainerRef = useRef<HTMLDivElement>(null);
 
   const [isOpen, setIsOpen] = useState(false);
@@ -108,31 +76,21 @@ export const MatchColumnSelect = ({
     leading: true,
   });
 
-  function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
+  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.currentTarget.value;
 
     setSearchFilter(value);
     debouncedHandleSearchFilter(value);
-  }
+  };
 
-  function handleDropdownItemClick() {
+  const handleDropdownItemClick = () => {
     setIsOpen(true);
-  }
+  };
 
-  function handleChange(option: ReadonlyDeep<SelectOption>) {
+  const handleChange = (option: ReadonlyDeep<SelectOption>) => {
     onChange(option);
     setIsOpen(false);
-  }
-
-  function renderIcon(icon: ReadonlyDeep<React.ReactNode>) {
-    if (icon && React.isValidElement(icon)) {
-      return React.cloneElement<TablerIconsProps>(icon as any, {
-        size: 16,
-        color: theme.font.color.primary,
-      });
-    }
-    return null;
-  }
+  };
 
   useListenClickOutside({
     refs: [dropdownContainerRef],
@@ -147,30 +105,23 @@ export const MatchColumnSelect = ({
 
   return (
     <>
-      <StyledDropdownItem
-        id={name}
-        ref={(node) => {
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          dropdownItemRef.current = node;
-          refs.setReference(node);
-        }}
-        onClick={handleDropdownItemClick}
-      >
-        {renderIcon(value?.icon)}
-        <StyledDropdownLabel isPlaceholder={!value?.label}>
-          {value?.label ?? placeholder}
-        </StyledDropdownLabel>
-        <IconChevronDown size={16} color={theme.font.color.tertiary} />
-      </StyledDropdownItem>
+      <div ref={refs.setReference}>
+        <MenuItem
+          LeftIcon={value?.icon}
+          onClick={handleDropdownItemClick}
+          text={value?.label ?? placeholder ?? ''}
+          accent={value?.label ? 'default' : 'placeholder'}
+        />
+      </div>
       {isOpen &&
         createPortal(
           <StyledFloatingDropdown ref={refs.setFloating} style={floatingStyles}>
             <StyledDropdownMenu
+              data-select-disable
               ref={dropdownContainerRef}
-              width={dropdownItemRef.current?.clientWidth}
+              width={refs.domReference.current?.clientWidth}
             >
-              <DropdownMenuInput
+              <DropdownMenuSearchInput
                 value={searchFilter}
                 onChange={handleFilterChange}
                 autoFocus
@@ -179,18 +130,16 @@ export const MatchColumnSelect = ({
               <StyledDropdownMenuItemsContainer hasMaxHeight>
                 {options?.map((option) => (
                   <>
-                    <DropdownMenuSelectableItem
-                      id={option.value}
+                    <MenuItemSelect
                       key={option.label}
                       selected={value?.label === option.label}
                       onClick={() => handleChange(option)}
                       disabled={
                         option.disabled && value?.value !== option.value
                       }
-                    >
-                      {renderIcon(option?.icon)}
-                      {option.label}
-                    </DropdownMenuSelectableItem>
+                      LeftIcon={option?.icon}
+                      text={option.label}
+                    />
                     {option.disabled &&
                       value?.value !== option.value &&
                       createPortal(
@@ -205,9 +154,7 @@ export const MatchColumnSelect = ({
                       )}
                   </>
                 ))}
-                {options?.length === 0 && (
-                  <DropdownMenuItem>No result</DropdownMenuItem>
-                )}
+                {options?.length === 0 && <MenuItem text="No result" />}
               </StyledDropdownMenuItemsContainer>
             </StyledDropdownMenu>
           </StyledFloatingDropdown>,

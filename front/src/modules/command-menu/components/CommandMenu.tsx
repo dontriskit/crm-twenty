@@ -17,31 +17,32 @@ import { getLogoUrlFromDomainName } from '~/utils';
 import { useCommandMenu } from '../hooks/useCommandMenu';
 import { commandMenuCommandsState } from '../states/commandMenuCommandsState';
 import { isCommandMenuOpenedState } from '../states/isCommandMenuOpenedState';
-import { CommandType } from '../types/Command';
+import { Command, CommandType } from '../types/Command';
 
+import { CommandGroup } from './CommandGroup';
 import { CommandMenuItem } from './CommandMenuItem';
 import {
   StyledDialog,
   StyledEmpty,
-  StyledGroup,
   StyledInput,
   StyledList,
 } from './CommandMenuStyles';
 
-export function CommandMenu() {
+export const CommandMenu = () => {
   const { openCommandMenu, closeCommandMenu } = useCommandMenu();
   const openActivityRightDrawer = useOpenActivityRightDrawer();
   const isCommandMenuOpened = useRecoilValue(isCommandMenuOpenedState);
   const [search, setSearch] = useState('');
-  const commands = useRecoilValue(commandMenuCommandsState);
+  const commandMenuCommands = useRecoilValue(commandMenuCommandsState);
 
   useScopedHotkeys(
     'ctrl+k,meta+k',
     () => {
+      setSearch('');
       openCommandMenu();
     },
     AppHotkeyScope.CommandMenu,
-    [openCommandMenu],
+    [openCommandMenu, setSearch],
   );
 
   const { data: peopleData } = useSearchPeopleQuery({
@@ -65,6 +66,7 @@ export function CommandMenu() {
       limit: 3,
     },
   });
+
   const companies = companyData?.searchResults ?? [];
 
   const { data: activityData } = useSearchActivityQuery({
@@ -78,18 +80,38 @@ export function CommandMenu() {
       limit: 3,
     },
   });
+
   const activities = activityData?.searchResults ?? [];
 
-  const matchingNavigateCommand = commands.find(
+  const checkInShortcuts = (cmd: Command, search: string) => {
+    if (cmd.shortcuts && cmd.shortcuts.length > 0) {
+      return cmd.shortcuts
+        .join('')
+        .toLowerCase()
+        .includes(search.toLowerCase());
+    }
+    return false;
+  };
+
+  const checkInLabels = (cmd: Command, search: string) => {
+    if (cmd.label) {
+      return cmd.label.toLowerCase().includes(search.toLowerCase());
+    }
+    return false;
+  };
+
+  const matchingNavigateCommand = commandMenuCommands.filter(
     (cmd) =>
-      cmd.shortcuts?.join('') === search?.toUpperCase() &&
-      cmd.type === CommandType.Navigate,
+      (search.length > 0
+        ? checkInShortcuts(cmd, search) || checkInLabels(cmd, search)
+        : true) && cmd.type === CommandType.Navigate,
   );
 
-  const matchingCreateCommand = commands.find(
+  const matchingCreateCommand = commandMenuCommands.filter(
     (cmd) =>
-      cmd.shortcuts?.join('') === search?.toUpperCase() &&
-      cmd.type === CommandType.Create,
+      (search.length > 0
+        ? checkInShortcuts(cmd, search) || checkInLabels(cmd, search)
+        : true) && cmd.type === CommandType.Create,
   );
 
   return (
@@ -100,124 +122,83 @@ export function CommandMenu() {
           closeCommandMenu();
         }
       }}
-      label="Global Command Menu"
       shouldFilter={false}
+      label="Global Command Menu"
     >
       <StyledInput
-        placeholder="Search"
         value={search}
+        placeholder="Search"
         onValueChange={setSearch}
       />
       <StyledList>
         <StyledEmpty>No results found.</StyledEmpty>
-        {!matchingCreateCommand && (
-          <StyledGroup heading="Create">
-            {commands
-              .filter((cmd) => cmd.type === CommandType.Create)
-              .map((cmd) => (
-                <CommandMenuItem
-                  key={cmd.label}
-                  to={cmd.to}
-                  label={cmd.label}
-                  icon={cmd.icon}
-                  shortcuts={cmd.shortcuts || []}
-                  onClick={cmd.onCommandClick}
-                />
-              ))}
-          </StyledGroup>
-        )}
-        {matchingCreateCommand && (
-          <StyledGroup heading="Create">
+        <CommandGroup heading="Create">
+          {matchingCreateCommand.map((cmd) => (
             <CommandMenuItem
-              key={matchingCreateCommand.label}
-              to={matchingCreateCommand.to}
-              label={matchingCreateCommand.label}
-              icon={matchingCreateCommand.icon}
-              shortcuts={matchingCreateCommand.shortcuts || []}
-              onClick={matchingCreateCommand.onCommandClick}
+              to={cmd.to}
+              key={cmd.label}
+              Icon={cmd.Icon}
+              label={cmd.label}
+              onClick={cmd.onCommandClick}
+              shortcuts={cmd.shortcuts || []}
             />
-          </StyledGroup>
-        )}
-        {matchingNavigateCommand && (
-          <StyledGroup heading="Navigate">
+          ))}
+        </CommandGroup>
+        <CommandGroup heading="Navigate">
+          {matchingNavigateCommand.map((cmd) => (
             <CommandMenuItem
-              to={matchingNavigateCommand.to}
-              label={matchingNavigateCommand.label}
-              shortcuts={matchingNavigateCommand.shortcuts}
-              key={matchingNavigateCommand.label}
+              to={cmd.to}
+              key={cmd.label}
+              label={cmd.label}
+              onClick={cmd.onCommandClick}
+              shortcuts={cmd.shortcuts || []}
             />
-          </StyledGroup>
-        )}
-        {!!people.length && (
-          <StyledGroup heading="People">
-            {people.map((person) => (
-              <CommandMenuItem
-                to={`person/${person.id}`}
-                label={person.displayName}
-                key={person.id}
-                icon={
-                  <Avatar
-                    avatarUrl={null}
-                    size="sm"
-                    colorId={person.id}
-                    placeholder={person.displayName}
-                  />
-                }
-              />
-            ))}
-          </StyledGroup>
-        )}
-        {!!companies.length && (
-          <StyledGroup heading="Companies">
-            {companies.map((company) => (
-              <CommandMenuItem
-                to={`companies/${company.id}`}
-                label={company.name}
-                key={company.id}
-                icon={
-                  <Avatar
-                    avatarUrl={getLogoUrlFromDomainName(company.domainName)}
-                    size="sm"
-                    colorId={company.id}
-                    placeholder={company.name}
-                  />
-                }
-              />
-            ))}
-          </StyledGroup>
-        )}
-        {!!activities.length && (
-          <StyledGroup heading="Notes">
-            {activities.map((activity) => (
-              <CommandMenuItem
-                onClick={() => openActivityRightDrawer(activity.id)}
-                label={activity.title ?? ''}
-                key={activity.id}
-                icon={<IconNotes />}
-              />
-            ))}
-          </StyledGroup>
-        )}
-        {!matchingNavigateCommand && (
-          <StyledGroup heading="Navigate">
-            {commands
-              .filter(
-                (cmd) =>
-                  (cmd.shortcuts?.join('').includes(search?.toUpperCase()) ||
-                    cmd.label?.toUpperCase().includes(search?.toUpperCase())) &&
-                  cmd.type === CommandType.Navigate,
-              )
-              .map((cmd) => (
-                <CommandMenuItem
-                  key={cmd.shortcuts?.join('') ?? ''}
-                  to={cmd.to}
-                  label={cmd.label}
-                  shortcuts={cmd.shortcuts}
+          ))}
+        </CommandGroup>
+        <CommandGroup heading="People">
+          {people.map((person) => (
+            <CommandMenuItem
+              key={person.id}
+              to={`person/${person.id}`}
+              label={person.displayName}
+              Icon={() => (
+                <Avatar
+                  type="rounded"
+                  avatarUrl={null}
+                  colorId={person.id}
+                  placeholder={person.displayName}
                 />
-              ))}
-          </StyledGroup>
-        )}
+              )}
+            />
+          ))}
+        </CommandGroup>
+        <CommandGroup heading="Companies">
+          {companies.map((company) => (
+            <CommandMenuItem
+              key={company.id}
+              label={company.name}
+              to={`companies/${company.id}`}
+              Icon={() => (
+                <Avatar
+                  colorId={company.id}
+                  placeholder={company.name}
+                  avatarUrl={getLogoUrlFromDomainName(company.domainName)}
+                />
+              )}
+            />
+          ))}
+        </CommandGroup>
+        <CommandGroup heading="Notes">
+          {activities.map((activity) => (
+            <CommandMenuItem
+              Icon={IconNotes}
+              key={activity.id}
+              label={activity.title ?? ''}
+              onClick={() => openActivityRightDrawer(activity.id)}
+            />
+          ))}
+        </CommandGroup>
       </StyledList>
     </StyledDialog>
   );
-}
+};

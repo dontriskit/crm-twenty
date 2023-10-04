@@ -1,14 +1,14 @@
 import { useLocation } from 'react-router-dom';
 import { useRecoilCallback } from 'recoil';
 
-import { availableFiltersScopedState } from '@/ui/filter-n-sort/states/availableFiltersScopedState';
-import { useResetTableRowSelection } from '@/ui/table/hooks/useResetTableRowSelection';
-import { isFetchingEntityTableDataState } from '@/ui/table/states/isFetchingEntityTableDataState';
-import { numberOfTableRowsState } from '@/ui/table/states/numberOfTableRowsState';
-import { TableRecoilScopeContext } from '@/ui/table/states/recoil-scope-contexts/TableRecoilScopeContext';
-import { tableRowIdsState } from '@/ui/table/states/tableRowIdsState';
+import { useResetTableRowSelection } from '@/ui/data-table/hooks/useResetTableRowSelection';
+import { isFetchingEntityTableDataState } from '@/ui/data-table/states/isFetchingEntityTableDataState';
+import { numberOfTableRowsState } from '@/ui/data-table/states/numberOfTableRowsState';
+import { TableRecoilScopeContext } from '@/ui/data-table/states/recoil-scope-contexts/TableRecoilScopeContext';
+import { tableRowIdsState } from '@/ui/data-table/states/tableRowIdsState';
 import { currentPageLocationState } from '@/ui/utilities/loading-state/states/currentPageLocationState';
-import { useContextScopeId } from '@/ui/utilities/recoil-scope/hooks/useContextScopeId';
+import { useRecoilScopeId } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopeId';
+import { availableFiltersScopedState } from '@/ui/view-bar/states/availableFiltersScopedState';
 import { GetPeopleQuery } from '~/generated/graphql';
 import { peopleFilters } from '~/pages/people/people-filters';
 
@@ -21,10 +21,10 @@ import { peopleLinkedinUrlFamilyState } from '../states/peopleLinkedinUrlFamilyS
 import { peopleNameCellFamilyState } from '../states/peopleNamesFamilyState';
 import { peoplePhoneFamilyState } from '../states/peoplePhoneFamilyState';
 
-export function useSetPeopleEntityTable() {
+export const useSetPeopleEntityTable = () => {
   const resetTableRowSelection = useResetTableRowSelection();
 
-  const tableContextScopeId = useContextScopeId(TableRecoilScopeContext);
+  const tableContextScopeId = useRecoilScopeId(TableRecoilScopeContext);
 
   const currentLocation = useLocation().pathname;
 
@@ -132,6 +132,6 @@ export function useSetPeopleEntityTable() {
 
         set(isFetchingEntityTableDataState, false);
       },
-    [],
+    [currentLocation, resetTableRowSelection, tableContextScopeId],
   );
-}
+};

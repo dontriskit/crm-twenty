@@ -1,12 +1,12 @@
 import { useRef } from 'react';
 import debounce from 'lodash.debounce';
 
-import { DropdownMenuCheckableItem } from '@/ui/dropdown/components/DropdownMenuCheckableItem';
-import { DropdownMenuInput } from '@/ui/dropdown/components/DropdownMenuInput';
-import { DropdownMenuItem } from '@/ui/dropdown/components/DropdownMenuItem';
+import { DropdownMenuSearchInput } from '@/ui/dropdown/components/DropdownMenuSearchInput';
 import { StyledDropdownMenu } from '@/ui/dropdown/components/StyledDropdownMenu';
 import { StyledDropdownMenuItemsContainer } from '@/ui/dropdown/components/StyledDropdownMenuItemsContainer';
 import { StyledDropdownMenuSeparator } from '@/ui/dropdown/components/StyledDropdownMenuSeparator';
+import { MenuItem } from '@/ui/menu-item/components/MenuItem';
+import { MenuItemMultiSelectAvatar } from '@/ui/menu-item/components/MenuItemMultiSelectAvatar';
 import { useListenClickOutside } from '@/ui/utilities/pointer-event/hooks/useListenClickOutside';
 import { Avatar } from '@/users/components/Avatar';
 import { isNonEmptyString } from '~/utils/isNonEmptyString';
@@ -22,7 +22,7 @@ export type EntitiesForMultipleEntitySelect<
   loading: boolean;
 };
 
-export function MultipleEntitySelect<
+export const MultipleEntitySelect = <
   CustomEntityForSelect extends EntityForSelect,
 >({
   entities,
@@ -39,15 +39,15 @@ export function MultipleEntitySelect<
   onCancel?: () => void;
   onSubmit?: () => void;
   value: Record<string, boolean>;
-}) {
+}) => {
   const debouncedSetSearchFilter = debounce(onSearchFilterChange, 100, {
     leading: true,
   });
 
-  function handleFilterChange(event: React.ChangeEvent<HTMLInputElement>) {
+  const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     debouncedSetSearchFilter(event.currentTarget.value);
     onSearchFilterChange(event.currentTarget.value);
-  }
+  };
 
   let entitiesInDropdown = [
     ...(entities.filteredSelectedEntities ?? []),
@@ -72,8 +72,8 @@ export function MultipleEntitySelect<
   });
 
   return (
-    <StyledDropdownMenu ref={containerRef}>
-      <DropdownMenuInput
+    <StyledDropdownMenu ref={containerRef} data-select-disable>
+      <DropdownMenuSearchInput
         value={searchFilter}
         onChange={handleFilterChange}
         autoFocus
@@ -81,27 +81,26 @@ export function MultipleEntitySelect<
       <StyledDropdownMenuSeparator />
       <StyledDropdownMenuItemsContainer hasMaxHeight>
         {entitiesInDropdown?.map((entity) => (
-          <DropdownMenuCheckableItem
+          <MenuItemMultiSelectAvatar
             key={entity.id}
-            checked={value[entity.id]}
-            onChange={(newCheckedValue) =>
+            selected={value[entity.id]}
+            onSelectChange={(newCheckedValue) =>
               onChange({ ...value, [entity.id]: newCheckedValue })
             }
-          >
-            <Avatar
-              avatarUrl={entity.avatarUrl}
-              colorId={entity.id}
-              placeholder={entity.name}
-              size="md"
-              type={entity.avatarType ?? 'rounded'}
-            />
-            {entity.name}
-          </DropdownMenuCheckableItem>
+            avatar={
+              <Avatar
+                avatarUrl={entity.avatarUrl}
+                colorId={entity.id}
+                placeholder={entity.name}
+                size="md"
+                type={entity.avatarType ?? 'rounded'}
+              />
+            }
+            text={entity.name}
+          />
         ))}
-        {entitiesInDropdown?.length === 0 && (
-          <DropdownMenuItem>No result</DropdownMenuItem>
-        )}
+        {entitiesInDropdown?.length === 0 && <MenuItem text="No result" />}
       </StyledDropdownMenuItemsContainer>
     </StyledDropdownMenu>
   );
-}
+};

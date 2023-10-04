@@ -1,11 +1,11 @@
 import { expect } from '@storybook/jest';
-import type { Meta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
 
 import { AppPath } from '@/types/AppPath';
 import {
   PageDecorator,
-  type PageDecoratorArgs,
+  PageDecoratorArgs,
 } from '~/testing/decorators/PageDecorator';
 import { graphqlMocks } from '~/testing/graphqlMocks';
 import { sleep } from '~/testing/sleep';
@@ -34,9 +34,7 @@ export const Email: Story = {
     const sortButton = await canvas.findByText('Sort');
     await userEvent.click(sortButton);
 
-    const emailSortButton = canvas.getByText('Email', {
-      selector: 'li > div > div',
-    });
+    const emailSortButton = await canvas.findByTestId('select-sort-2');
     await userEvent.click(emailSortButton);
 
     expect(await canvas.getByTestId('remove-icon-email')).toBeInTheDocument();
@@ -45,22 +43,20 @@ export const Email: Story = {
   },
 };
 
-export const Cancel: Story = {
+export const Reset: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
     const sortButton = await canvas.findByText('Sort');
     await userEvent.click(sortButton);
 
-    const emailSortButton = canvas.getByText('Email', {
-      selector: 'li > div > div',
-    });
+    const emailSortButton = await canvas.findByTestId('select-sort-2');
     await userEvent.click(emailSortButton);
 
     expect(await canvas.getByTestId('remove-icon-email')).toBeInTheDocument();
 
-    const cancelButton = canvas.getByText('Cancel');
-    await userEvent.click(cancelButton);
+    const resetButton = canvas.getByText('Reset');
+    await userEvent.click(resetButton);
 
     await sleep(1000);
 

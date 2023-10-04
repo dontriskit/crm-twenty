@@ -1,6 +1,6 @@
 import { getOperationName } from '@apollo/client/utilities';
 import { expect } from '@storybook/jest';
-import type { Meta } from '@storybook/react';
+import { Meta } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
 import { graphql } from 'msw';
 
@@ -10,7 +10,7 @@ import { AppPath } from '@/types/AppPath';
 import { Company } from '~/generated/graphql';
 import {
   PageDecorator,
-  type PageDecoratorArgs,
+  PageDecoratorArgs,
 } from '~/testing/decorators/PageDecorator';
 import { graphqlMocks } from '~/testing/graphqlMocks';
 import { fetchOneFromData } from '~/testing/mock-data';
@@ -51,13 +51,21 @@ export const InteractWithManyRows: Story = {
       canvas.queryByTestId('editable-cell-edit-mode-container'),
     ).toBeNull();
 
-    await userEvent.click(firstRowEmailCell);
+    if (!firstRowEmailCell.parentElement) {
+      throw new Error('No parent node');
+    }
+
+    await userEvent.click(firstRowEmailCell.parentElement);
 
     expect(
       canvas.queryByTestId('editable-cell-edit-mode-container'),
     ).toBeInTheDocument();
 
-    await userEvent.click(secondRowEmailCell);
+    if (!secondRowEmailCell.parentElement) {
+      throw new Error('No parent node');
+    }
+
+    await userEvent.click(secondRowEmailCell.parentElement);
 
     await sleep(25);
 
@@ -65,7 +73,7 @@ export const InteractWithManyRows: Story = {
       canvas.queryByTestId('editable-cell-edit-mode-container'),
     ).toBeNull();
 
-    await userEvent.click(secondRowEmailCell);
+    await userEvent.click(secondRowEmailCell.parentElement);
 
     await sleep(25);
 
@@ -272,7 +280,7 @@ export const SelectRelationWithKeys: Story = {
 
     await userEvent.type(relationInput, '{enter}');
 
-    await sleep(50);
+    await sleep(200);
 
     const allAirbns = await canvas.findAllByText('Aircall');
     expect(allAirbns.length).toBe(1);

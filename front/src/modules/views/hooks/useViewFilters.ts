@@ -1,15 +1,15 @@
 import { useCallback } from 'react';
 import { useRecoilState, useRecoilValue } from 'recoil';
 
-import { filtersScopedState } from '@/ui/filter-n-sort/states/filtersScopedState';
-import { savedFiltersByKeyScopedSelector } from '@/ui/filter-n-sort/states/savedFiltersByKeyScopedSelector';
-import { savedFiltersScopedState } from '@/ui/filter-n-sort/states/savedFiltersScopedState';
-import type { Filter } from '@/ui/filter-n-sort/types/Filter';
-import type { FilterDefinitionByEntity } from '@/ui/filter-n-sort/types/FilterDefinitionByEntity';
-import { TableRecoilScopeContext } from '@/ui/table/states/recoil-scope-contexts/TableRecoilScopeContext';
-import { currentTableViewIdState } from '@/ui/table/states/tableViewsState';
+import { RecoilScopeContext } from '@/types/RecoilScopeContext';
 import { useRecoilScopedState } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedState';
 import { useRecoilScopedValue } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedValue';
+import { availableFiltersScopedState } from '@/ui/view-bar/states/availableFiltersScopedState';
+import { currentViewIdScopedState } from '@/ui/view-bar/states/currentViewIdScopedState';
+import { filtersScopedState } from '@/ui/view-bar/states/filtersScopedState';
+import { savedFiltersFamilyState } from '@/ui/view-bar/states/savedFiltersFamilyState';
+import { savedFiltersByKeyFamilySelector } from '@/ui/view-bar/states/selectors/savedFiltersByKeyFamilySelector';
+import { Filter } from '@/ui/view-bar/types/Filter';
 import {
   useCreateViewFiltersMutation,
   useDeleteViewFiltersMutation,
@@ -18,28 +18,34 @@ import {
 } from '~/generated/graphql';
 import { isDeeplyEqual } from '~/utils/isDeeplyEqual';
 
-export const useViewFilters = <Entity>({
-  availableFilters,
+export const useViewFilters = ({
+  RecoilScopeContext,
+  skipFetch,
 }: {
-  availableFilters: FilterDefinitionByEntity<Entity>[];
+  RecoilScopeContext: RecoilScopeContext;
+  skipFetch?: boolean;
 }) => {
   const currentViewId = useRecoilScopedValue(
-    currentTableViewIdState,
-    TableRecoilScopeContext,
+    currentViewIdScopedState,
+    RecoilScopeContext,
   );
   const [filters, setFilters] = useRecoilScopedState(
     filtersScopedState,
-    TableRecoilScopeContext,
+    RecoilScopeContext,
+  );
+  const [availableFilters] = useRecoilScopedState(
+    availableFiltersScopedState,
+    RecoilScopeContext,
   );
   const [, setSavedFilters] = useRecoilState(
-    savedFiltersScopedState(currentViewId),
+    savedFiltersFamilyState(currentViewId),
   );
   const savedFiltersByKey = useRecoilValue(
-    savedFiltersByKeyScopedSelector(currentViewId),
+    savedFiltersByKeyFamilySelector(currentViewId),
   );
 
   const { refetch } = useGetViewFiltersQuery({
-    skip: !currentViewId,
+    skip: !currentViewId || skipFetch,
     variables: {
       where: {
         viewId: { equals: currentViewId },
@@ -74,8 +80,8 @@ export const useViewFilters = <Entity>({
   const [deleteViewFiltersMutation] = useDeleteViewFiltersMutation();
 
   const createViewFilters = useCallback(
-    (filters: Filter[]) => {
-      if (!currentViewId || !filters.length) return;
+    (filters: Filter[], viewId = currentViewId) => {
+      if (!viewId || !filters.length) return;
 
       return createViewFiltersMutation({
         variables: {
@@ -87,7 +93,7 @@ export const useViewFilters = <Entity>({
               '',
             operand: filter.operand,
             value: filter.value,
-            viewId: currentViewId,
+            viewId,
           })),
         },
       });
@@ -168,5 +174,5 @@ export const useViewFilters = <Entity>({
     refetch,
   ]);
 
-  return { persistFilters };
+  return { createViewFilters, persistFilters };
 };

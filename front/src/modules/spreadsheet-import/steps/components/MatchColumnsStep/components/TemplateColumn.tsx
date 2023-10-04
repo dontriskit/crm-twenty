@@ -10,10 +10,10 @@ import styled from '@emotion/styled';
 
 import { MatchColumnSelect } from '@/spreadsheet-import/components/MatchColumnSelect';
 import { useSpreadsheetImportInternal } from '@/spreadsheet-import/hooks/useSpreadsheetImportInternal';
-import type { Fields } from '@/spreadsheet-import/types';
+import { Fields } from '@/spreadsheet-import/types';
 import { IconChevronDown, IconForbid } from '@/ui/icon';
 
-import type { Column, Columns } from '../MatchColumnsStep';
+import { Column, Columns } from '../MatchColumnsStep';
 import { ColumnType } from '../MatchColumnsStep';
 
 import { SubMatchingSelect } from './SubMatchingSelect';
@@ -109,7 +109,7 @@ export const TemplateColumn = <T extends string>({
   });
   const selectOptions = [
     {
-      icon: <IconForbid />,
+      icon: IconForbid,
       value: 'do-not-import',
       label: 'Do not import',
     },

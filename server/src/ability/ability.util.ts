@@ -74,6 +74,10 @@ const simpleAbilityCheck: OperationAbilityChecker = async (
 
   // Extract entity name from model name
   const entity = camelCase(modelName);
+  //TODO: Fix boolean data types so that disconnects are possible
+  if (typeof data === 'boolean') {
+    return true;
+  }
   // Handle all operations cases
   const operations = !Array.isArray(data) ? [data] : data;
   // Handle where case
@@ -113,12 +117,12 @@ const operationAbilityCheckers: Record<OperationType, OperationAbilityChecker> =
   };
 
 // Check relation nested abilities
-export async function relationAbilityChecker(
+export const relationAbilityChecker = async (
   modelName: Prisma.ModelName,
   ability: AppAbility,
   prisma: PrismaClient,
   args: any,
-) {
+) => {
   // Extract models from Prisma
   const models = Prisma.dmmf.datamodel.models;
   // Find main model from options
@@ -139,7 +143,6 @@ export async function relationAbilityChecker(
         // Extract operation name and value
         const operationType = Object.keys(operation)[0] as OperationType;
         const operationValue = operation[operationType];
-
         // Get operation checker for the operation type
         const operationChecker = operationAbilityCheckers[operationType];
 
@@ -208,7 +211,7 @@ export async function relationAbilityChecker(
   }
 
   return true;
-}
+};
 
 const isWhereInput = (input: any): boolean => {
   return Object.values(input).some((value) => typeof value === 'object');

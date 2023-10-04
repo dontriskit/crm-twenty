@@ -1,8 +1,9 @@
-import type { Meta, StoryObj } from '@storybook/react';
-import { IconCheckbox } from '@tabler/icons-react';
+import { Meta, StoryObj } from '@storybook/react';
 
+import { IconCheckbox } from '@/ui/icon';
 import { CatalogDecorator } from '~/testing/decorators/CatalogDecorator';
 import { ComponentDecorator } from '~/testing/decorators/ComponentDecorator';
+import { CatalogStory } from '~/testing/types';
 
 import { Tab } from '../Tab';
 
@@ -18,14 +19,18 @@ export const Default: Story = {
   args: {
     title: 'Tab title',
     active: false,
+    Icon: IconCheckbox,
+    disabled: false,
   },
+
   decorators: [ComponentDecorator],
 };
 
-export const Catalog: Story = {
-  args: { title: 'Tab title', icon: <IconCheckbox /> },
+export const Catalog: CatalogStory<Story, typeof Tab> = {
+  args: { title: 'Tab title', Icon: IconCheckbox },
   argTypes: {
     active: { control: false },
+    disabled: { control: false },
     onClick: { control: false },
   },
   parameters: {
@@ -41,7 +46,16 @@ export const Catalog: Story = {
         {
           name: 'Active',
           values: ['true', 'false'],
+          labels: (active: string) =>
+            active === 'true' ? 'active' : 'inactive',
           props: (active: string) => ({ active: active === 'true' }),
+        },
+        {
+          name: 'Disabled',
+          values: ['true', 'false'],
+          labels: (disabled: string) =>
+            disabled === 'true' ? 'disabled' : 'enabled',
+          props: (disabled: string) => ({ disabled: disabled === 'true' }),
         },
       ],
     },

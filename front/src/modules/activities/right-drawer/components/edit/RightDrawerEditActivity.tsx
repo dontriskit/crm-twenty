@@ -4,8 +4,14 @@ import { viewableActivityIdState } from '@/activities/states/viewableActivityIdS
 
 import { RightDrawerActivity } from '../RightDrawerActivity';
 
-export function RightDrawerEditActivity() {
-  const activityId = useRecoilValue(viewableActivityIdState);
+export const RightDrawerEditActivity = () => {
+  const viewableActivityId = useRecoilValue(viewableActivityIdState);
 
-  return <>{activityId && <RightDrawerActivity activityId={activityId} />}</>;
-}
+  return (
+    <>
+      {viewableActivityId && (
+        <RightDrawerActivity activityId={viewableActivityId} />
+      )}
+    </>
+  );
+};

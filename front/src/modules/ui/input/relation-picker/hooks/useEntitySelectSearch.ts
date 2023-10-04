@@ -3,35 +3,40 @@ import debounce from 'lodash.debounce';
 
 import { useRecoilScopedState } from '@/ui/utilities/recoil-scope/hooks/useRecoilScopedState';
 
-import { relationPickerHoverIndexScopedState } from '../states/relationPickerHoverIndexScopedState';
+import { RelationPickerRecoilScopeContext } from '../states/recoil-scope-contexts/RelationPickerRecoilScopeContext';
+import { relationPickerPreselectedIdScopedState } from '../states/relationPickerPreselectedIdScopedState';
 import { relationPickerSearchFilterScopedState } from '../states/relationPickerSearchFilterScopedState';
 
-export function useEntitySelectSearch() {
-  const [, setHoveredIndex] = useRecoilScopedState(
-    relationPickerHoverIndexScopedState,
+export const useEntitySelectSearch = () => {
+  const [, setRelationPickerPreselectedId] = useRecoilScopedState(
+    relationPickerPreselectedIdScopedState,
+    RelationPickerRecoilScopeContext,
   );
 
-  const [searchFilter, setSearchFilter] = useRecoilScopedState(
-    relationPickerSearchFilterScopedState,
+  const [relationPickerSearchFilter, setRelationPickerSearchFilter] =
+    useRecoilScopedState(relationPickerSearchFilterScopedState);
+
+  const debouncedSetSearchFilter = debounce(
+    setRelationPickerSearchFilter,
+    100,
+    {
+      leading: true,
+    },
   );
 
-  const debouncedSetSearchFilter = debounce(setSearchFilter, 100, {
-    leading: true,
-  });
-
-  function handleSearchFilterChange(
+  const handleSearchFilterChange = (
     event: React.ChangeEvent<HTMLInputElement>,
-  ) {
+  ) => {
     debouncedSetSearchFilter(event.currentTarget.value);
-    setHoveredIndex(0);
-  }
+    setRelationPickerPreselectedId('');
+  };
 
   useEffect(() => {
-    setSearchFilter('');
-  }, [setSearchFilter]);
+    setRelationPickerSearchFilter('');
+  }, [setRelationPickerSearchFilter]);
 
   return {
-    searchFilter,
+    searchFilter: relationPickerSearchFilter,
     handleSearchFilterChange,
   };
-}
+};

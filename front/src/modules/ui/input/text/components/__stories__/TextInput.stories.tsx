@@ -1,33 +1,34 @@
 import { useState } from 'react';
 import { expect } from '@storybook/jest';
 import { jest } from '@storybook/jest';
-import type { Meta, StoryObj } from '@storybook/react';
+import { Meta, StoryObj } from '@storybook/react';
 import { userEvent, within } from '@storybook/testing-library';
 
 import { ComponentDecorator } from '~/testing/decorators/ComponentDecorator';
 
-import { TextInput } from '../TextInput';
+import { TextInputSettings } from '../TextInputSettings';
 
 const changeJestFn = jest.fn();
 
-const meta: Meta<typeof TextInput> = {
+const meta: Meta<typeof TextInputSettings> = {
   title: 'UI/Input/TextInput',
-  component: TextInput,
+  component: TextInputSettings,
   decorators: [ComponentDecorator],
   args: { value: '', onChange: changeJestFn, placeholder: 'Placeholder' },
 };
 
 export default meta;
-type Story = StoryObj<typeof TextInput>;
+type Story = StoryObj<typeof TextInputSettings>;
 
-function FakeTextInput({
+const FakeTextInput = ({
   onChange,
   value: initialValue,
   ...props
-}: React.ComponentProps<typeof TextInput>) {
+}: React.ComponentProps<typeof TextInputSettings>) => {
   const [value, setValue] = useState(initialValue);
   return (
-    <TextInput
+    <TextInputSettings
+      // eslint-disable-next-line twenty/no-spread-props
       {...props}
       value={value}
       onChange={(text) => {
@@ -36,11 +37,12 @@ function FakeTextInput({
       }}
     />
   );
-}
+};
 
 export const Default: Story = {
   argTypes: { value: { control: false } },
   args: { value: 'A good value ' },
+  // eslint-disable-next-line twenty/no-spread-props
   render: (args) => <FakeTextInput {...args} />,
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);

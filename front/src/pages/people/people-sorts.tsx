@@ -1,4 +1,3 @@
-import { SortType } from '@/ui/filter-n-sort/types/interface';
 import {
   IconBuildingSkyscraper,
   IconCalendarEvent,
@@ -7,47 +6,46 @@ import {
   IconPhone,
   IconUser,
 } from '@/ui/icon/index';
-import {
-  PersonOrderByWithRelationInput as People_Order_By,
-  SortOrder as Order_By,
-} from '~/generated/graphql';
+import { SortDefinition } from '@/ui/view-bar/types/SortDefinition';
+import { SortDirection } from '@/ui/view-bar/types/SortDirection';
 
-export const availableSorts: SortType<People_Order_By>[] = [
+export const peopleAvailableSorts: SortDefinition[] = [
   {
     key: 'fullname',
     label: 'People',
-    icon: <IconUser size={16} />,
+    Icon: IconUser,
 
-    orderByTemplate: (order: Order_By) => [
-      { firstName: order },
-      { lastName: order },
+    getOrderByTemplate: (direction: SortDirection) => [
+      { firstName: direction },
+      { lastName: direction },
     ],
   },
   {
     key: 'company_name',
     label: 'Company',
-    icon: <IconBuildingSkyscraper size={16} />,
-
-    orderByTemplate: (order: Order_By) => [{ company: { name: order } }],
+    Icon: IconBuildingSkyscraper,
+    getOrderByTemplate: (direction: SortDirection) => [
+      { company: { name: direction } },
+    ],
   },
   {
     key: 'email',
     label: 'Email',
-    icon: <IconMail size={16} />,
+    Icon: IconMail,
   },
   {
     key: 'phone',
     label: 'Phone',
-    icon: <IconPhone size={16} />,
+    Icon: IconPhone,
   },
   {
     key: 'createdAt',
     label: 'Created at',
-    icon: <IconCalendarEvent size={16} />,
+    Icon: IconCalendarEvent,
   },
   {
     key: 'city',
     label: 'City',
-    icon: <IconMap size={16} />,
+    Icon: IconMap,
   },
 ];

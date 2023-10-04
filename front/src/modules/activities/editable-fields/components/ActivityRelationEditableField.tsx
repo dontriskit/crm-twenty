@@ -1,7 +1,7 @@
 import { ActivityTargetChips } from '@/activities/components/ActivityTargetChips';
-import { EditableField } from '@/ui/editable-field/components/EditableField';
-import { FieldRecoilScopeContext } from '@/ui/editable-field/states/recoil-scope-contexts/FieldRecoilScopeContext';
-import { IconArrowUpRight } from '@/ui/icon';
+import { IconArrowUpRight, IconPencil } from '@/ui/icon';
+import { InlineCellContainer } from '@/ui/inline-cell/components/InlineCellContainer';
+import { FieldRecoilScopeContext } from '@/ui/inline-cell/states/recoil-scope-contexts/FieldRecoilScopeContext';
 import { RelationPickerHotkeyScope } from '@/ui/input/relation-picker/types/RelationPickerHotkeyScope';
 import { RecoilScope } from '@/ui/utilities/recoil-scope/components/RecoilScope';
 import { Activity, ActivityTarget, Company, Person } from '~/generated/graphql';
@@ -19,16 +19,16 @@ type OwnProps = {
   };
 };
 
-export function ActivityRelationEditableField({ activity }: OwnProps) {
+export const ActivityRelationEditableField = ({ activity }: OwnProps) => {
   return (
-    <RecoilScope SpecificContext={FieldRecoilScopeContext}>
+    <RecoilScope CustomRecoilScopeContext={FieldRecoilScopeContext}>
       <RecoilScope>
-        <EditableField
-          useEditButton
+        <InlineCellContainer
+          buttonIcon={IconPencil}
           customEditHotkeyScope={{
             scope: RelationPickerHotkeyScope.RelationPicker,
           }}
-          iconLabel={<IconArrowUpRight />}
+          IconLabel={IconArrowUpRight}
           editModeContent={
             <ActivityRelationEditableFieldEditMode activity={activity} />
           }
@@ -41,4 +41,4 @@ export function ActivityRelationEditableField({ activity }: OwnProps) {
       </RecoilScope>
     </RecoilScope>
   );
-}
+};

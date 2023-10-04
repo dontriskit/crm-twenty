@@ -12,6 +12,8 @@ import { contextMenuEntriesState } from '../states/contextMenuEntriesState';
 import { contextMenuIsOpenState } from '../states/contextMenuIsOpenState';
 import { PositionType } from '../types/PositionType';
 
+import { ContextMenuItem } from './ContextMenuItem';
+
 type OwnProps = {
   selectedIds: string[];
 };
@@ -35,13 +37,13 @@ const StyledContainerContextMenu = styled.div<StyledContainerProps>`
   top: ${(props) => `${props.position.y}px`};
 
   transform: translateX(-50%);
-  width: 160px;
+  width: auto;
   z-index: 1;
 `;
 
-export function ContextMenu({ selectedIds }: OwnProps) {
-  const position = useRecoilValue(contextMenuPositionState);
-  const contextMenuOpen = useRecoilValue(contextMenuIsOpenState);
+export const ContextMenu = ({ selectedIds }: OwnProps) => {
+  const contextMenuPosition = useRecoilValue(contextMenuPositionState);
+  const contextMenuIsOpen = useRecoilValue(contextMenuIsOpenState);
   const contextMenuEntries = useRecoilValue(contextMenuEntriesState);
   const setContextMenuOpenState = useSetRecoilState(contextMenuIsOpenState);
   const setActionBarOpenState = useSetRecoilState(actionBarOpenState);
@@ -55,16 +57,35 @@ export function ContextMenu({ selectedIds }: OwnProps) {
     },
   });
 
-  if (selectedIds.length === 0 || !contextMenuOpen) {
+  if (selectedIds.length === 0 || !contextMenuIsOpen) {
     return null;
   }
+
+  const width = contextMenuEntries.some(
+    (contextMenuEntry) => contextMenuEntry.label === 'Remove from favorites',
+  )
+    ? 200
+    : undefined;
+
   return (
-    <StyledContainerContextMenu ref={wrapperRef} position={position}>
-      <StyledDropdownMenu>
+    <StyledContainerContextMenu
+      className="context-menu"
+      ref={wrapperRef}
+      position={contextMenuPosition}
+    >
+      <StyledDropdownMenu data-select-disable width={width}>
         <StyledDropdownMenuItemsContainer>
-          {contextMenuEntries}
+          {contextMenuEntries.map((item) => (
+            <ContextMenuItem
+              Icon={item.Icon}
+              label={item.label}
+              accent={item.accent}
+              onClick={item.onClick}
+              key={item.label}
+            />
+          ))}
         </StyledDropdownMenuItemsContainer>
       </StyledDropdownMenu>
     </StyledContainerContextMenu>
   );
-}
+};

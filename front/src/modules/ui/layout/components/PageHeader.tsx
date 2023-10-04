@@ -1,12 +1,13 @@
-import { ReactNode, useCallback } from 'react';
+import { ComponentProps, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { useRecoilValue } from 'recoil';
 
-import { IconButton } from '@/ui/button/components/IconButton';
+import { IconButton, IconButtonSize } from '@/ui/button/components/IconButton';
 import { IconChevronLeft } from '@/ui/icon/index';
+import { IconComponent } from '@/ui/icon/types/IconComponent';
 import NavCollapseButton from '@/ui/navbar/components/NavCollapseButton';
-import { navbarIconSize } from '@/ui/navbar/constants';
 import { OverflowingTextWithTooltip } from '@/ui/tooltip/OverflowingTextWithTooltip';
 import { useIsMobile } from '@/ui/utilities/responsive/hooks/useIsMobile';
 
@@ -26,6 +27,7 @@ const StyledTopBarContainer = styled.div`
   padding: ${({ theme }) => theme.spacing(2)};
   padding-left: 0;
   padding-right: ${({ theme }) => theme.spacing(3)};
+  z-index: 20;
 `;
 
 const StyledLeftContainer = styled.div`
@@ -43,6 +45,7 @@ const StyledTitleContainer = styled.div`
 `;
 
 const StyledTopBarButtonContainer = styled.div`
+  margin-left: ${({ theme }) => theme.spacing(1)};
   margin-right: ${({ theme }) => theme.spacing(1)};
 `;
 
@@ -50,11 +53,14 @@ const StyledBackIconButton = styled(IconButton)`
   margin-right: ${({ theme }) => theme.spacing(1)};
 `;
 
-const StyledTopBarIconStyledTitleContainer = styled.div`
+const StyledTopBarIconStyledTitleContainer = styled.div<{
+  hideLeftPadding?: boolean;
+}>`
   align-items: center;
   display: flex;
   flex-direction: row;
-  padding-left: ${({ theme }) => theme.spacing(2)};
+  padding-left: ${({ theme, hideLeftPadding }) =>
+    hideLeftPadding ? theme.spacing(2) : undefined};
   width: 100%;
 `;
 
@@ -63,25 +69,31 @@ const StyledPageActionContainer = styled.div`
   gap: ${({ theme }) => theme.spacing(2)};
 `;
 
-type OwnProps = {
+type PageHeaderProps = ComponentProps<'div'> & {
   title: string;
   hasBackButton?: boolean;
-  icon: ReactNode;
-  children: JSX.Element | JSX.Element[];
+  Icon: IconComponent;
+  children?: JSX.Element | JSX.Element[];
 };
 
-export function PageHeader({ title, hasBackButton, icon, children }: OwnProps) {
+export const PageHeader = ({
+  title,
+  hasBackButton,
+  Icon,
+  children,
+  ...props
+}: PageHeaderProps) => {
   const navigate = useNavigate();
   const navigateBack = useCallback(() => navigate(-1), [navigate]);
 
   const isNavbarOpened = useRecoilValue(isNavbarOpenedState);
 
-  const iconSize = useIsMobile()
-    ? navbarIconSize.mobile
-    : navbarIconSize.desktop;
+  const iconSize: IconButtonSize = useIsMobile() ? 'small' : 'medium';
+  const theme = useTheme();
 
   return (
-    <StyledTopBarContainer>
+    // eslint-disable-next-line twenty/no-spread-props
+    <StyledTopBarContainer {...props}>
       <StyledLeftContainer>
         {!isNavbarOpened && (
           <StyledTopBarButtonContainer>
@@ -91,13 +103,15 @@ export function PageHeader({ title, hasBackButton, icon, children }: OwnProps) {
         {hasBackButton && (
           <StyledTopBarButtonContainer>
             <StyledBackIconButton
-              icon={<IconChevronLeft size={iconSize} />}
+              Icon={IconChevronLeft}
+              size={iconSize}
               onClick={navigateBack}
+              variant="tertiary"
             />
           </StyledTopBarButtonContainer>
         )}
-        <StyledTopBarIconStyledTitleContainer>
-          {icon}
+        <StyledTopBarIconStyledTitleContainer hideLeftPadding={!hasBackButton}>
+          {Icon && <Icon size={theme.icon.size.md} />}
           <StyledTitleContainer data-testid="top-bar-title">
             <OverflowingTextWithTooltip text={title} />
           </StyledTitleContainer>
@@ -106,4 +120,4 @@ export function PageHeader({ title, hasBackButton, icon, children }: OwnProps) {
       <StyledPageActionContainer>{children}</StyledPageActionContainer>
     </StyledTopBarContainer>
   );
-}
+};

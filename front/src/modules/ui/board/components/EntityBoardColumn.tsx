@@ -5,8 +5,7 @@ import { useRecoilValue } from 'recoil';
 
 import { BoardColumn } from '@/ui/board/components/BoardColumn';
 import { BoardCardIdContext } from '@/ui/board/contexts/BoardCardIdContext';
-import { BoardColumnIdContext } from '@/ui/board/contexts/BoardColumnIdContext';
-import { BoardColumnDefinition } from '@/ui/board/types/BoardColumnDefinition';
+import { BoardColumnContext } from '@/ui/board/contexts/BoardColumnContext';
 import { RecoilScope } from '@/ui/utilities/recoil-scope/components/RecoilScope';
 
 import { boardCardIdsByColumnIdFamilyState } from '../states/boardCardIdsByColumnIdFamilyState';
@@ -29,13 +28,21 @@ const StyledColumnCardsContainer = styled.div`
   flex-direction: column;
 `;
 
+type BoardColumnCardsContainerProps = {
+  children: React.ReactNode;
+  droppableProvided: DroppableProvided;
+};
+
+type EntityBoardColumnProps = {
+  boardOptions: BoardOptions;
+  onDelete?: (columnId: string) => void;
+  onTitleEdit: (columnId: string, title: string, color: string) => void;
+};
+
 const BoardColumnCardsContainer = ({
   children,
   droppableProvided,
-}: {
-  children: React.ReactNode;
-  droppableProvided: DroppableProvided;
-}) => {
+}: BoardColumnCardsContainerProps) => {
   return (
     <StyledColumnCardsContainer
       ref={droppableProvided?.innerRef}
@@ -47,39 +54,38 @@ const BoardColumnCardsContainer = ({
   );
 };
 
-export function EntityBoardColumn({
-  column,
+export const EntityBoardColumn = ({
   boardOptions,
-  onEditColumnTitle,
-}: {
-  column: BoardColumnDefinition;
-  boardOptions: BoardOptions;
-  onEditColumnTitle: (columnId: string, title: string, color: string) => void;
-}) {
-  const boardColumnId = useContext(BoardColumnIdContext) ?? '';
+  onDelete,
+  onTitleEdit,
+}: EntityBoardColumnProps) => {
+  const column = useContext(BoardColumnContext);
+
+  const boardColumnId = column?.id || '';
 
   const boardColumnTotal = useRecoilValue(
-    boardColumnTotalsFamilySelector(column.id),
+    boardColumnTotalsFamilySelector(boardColumnId),
   );
 
   const cardIds = useRecoilValue(
-    boardCardIdsByColumnIdFamilyState(boardColumnId ?? ''),
+    boardCardIdsByColumnIdFamilyState(boardColumnId),
   );
 
-  function handleEditColumnTitle(title: string, color: string) {
-    onEditColumnTitle(boardColumnId, title, color);
-  }
+  const handleTitleEdit = (title: string, color: string) => {
+    onTitleEdit(boardColumnId, title, color);
+  };
+
+  if (!column) return <></>;
 
   return (
     <Droppable droppableId={column.id}>
       {(droppableProvided) => (
         <BoardColumn
-          onTitleEdit={handleEditColumnTitle}
-          title={column.title}
-          color={column.colorCode}
+          onTitleEdit={handleTitleEdit}
+          onDelete={onDelete}
           totalAmount={boardColumnTotal}
-          isFirstColumn={column.index === 0}
           numChildren={cardIds.length}
+          stageId={column.id}
         >
           <BoardColumnCardsContainer droppableProvided={droppableProvided}>
             {cardIds.map((cardId, index) => (
@@ -112,4 +118,4 @@ export function EntityBoardColumn({
       )}
     </Droppable>
   );
-}
+};

@@ -3,8 +3,8 @@ import styled from '@emotion/styled';
 import { AnimatePresence, LayoutGroup } from 'framer-motion';
 import debounce from 'lodash.debounce';
 
-import { Button, ButtonVariant } from '@/ui/button/components/Button';
-import { TextInput } from '@/ui/input/text/components/TextInput';
+import { Button } from '@/ui/button/components/Button';
+import { TextInputSettings } from '@/ui/input/text/components/TextInputSettings';
 import { Modal } from '@/ui/modal/components/Modal';
 import {
   Section,
@@ -25,12 +25,18 @@ export type ConfirmationModalProps = {
 };
 
 const StyledConfirmationModal = styled(Modal)`
-  padding: ${({ theme }) => theme.spacing(4)};
-  width: calc(400px - ${({ theme }) => theme.spacing(10 * 2)});
+  border-radius: ${({ theme }) => theme.spacing(1)};
+  padding: ${({ theme }) => theme.spacing(6)};
+  width: calc(400px - ${({ theme }) => theme.spacing(32)});
 `;
 
 const StyledCenteredButton = styled(Button)`
   justify-content: center;
+  margin-top: ${({ theme }) => theme.spacing(2)};
+`;
+
+const StyledCenteredTitle = styled.div`
+  text-align: center;
 `;
 
 export const StyledConfirmationButton = styled(StyledCenteredButton)`
@@ -44,7 +50,7 @@ export const StyledConfirmationButton = styled(StyledCenteredButton)`
   }
 `;
 
-export function ConfirmationModal({
+export const ConfirmationModal = ({
   isOpen = false,
   title,
   subtitle,
@@ -53,17 +59,17 @@ export function ConfirmationModal({
   deleteButtonText = 'Delete',
   confirmationValue,
   confirmationPlaceholder,
-}: ConfirmationModalProps) {
+}: ConfirmationModalProps) => {
   const [inputConfirmationValue, setInputConfirmationValue] =
     useState<string>('');
   const [isValidValue, setIsValidValue] = useState(!confirmationValue);
 
   const handleInputConfimrationValueChange = (value: string) => {
     setInputConfirmationValue(value);
-    isValueMatchingUserEmail(confirmationValue, value);
+    isValueMatchingInput(confirmationValue, value);
   };
 
-  const isValueMatchingUserEmail = debounce(
+  const isValueMatchingInput = debounce(
     (value?: string, inputValue?: string) => {
       setIsValidValue(Boolean(value && inputValue && value === inputValue));
     },
@@ -75,13 +81,16 @@ export function ConfirmationModal({
       <LayoutGroup>
         <StyledConfirmationModal
           isOpen={isOpen}
-          onOutsideClick={() => {
+          onClose={() => {
             if (isOpen) {
               setIsOpen(false);
             }
           }}
+          onEnter={onConfirmClick}
         >
-          <H1Title title={title} fontColor={H1TitleFontColor.Primary} />
+          <StyledCenteredTitle>
+            <H1Title title={title} fontColor={H1TitleFontColor.Primary} />
+          </StyledCenteredTitle>
           <Section
             alignment={SectionAlignment.Center}
             fontColor={SectionFontColor.Primary}
@@ -90,33 +99,31 @@ export function ConfirmationModal({
           </Section>
           {confirmationValue && (
             <Section>
-              <TextInput
+              <TextInputSettings
                 value={inputConfirmationValue}
                 onChange={handleInputConfimrationValueChange}
                 placeholder={confirmationPlaceholder}
                 fullWidth
-                key={'email-' + confirmationValue}
+                key={'input-' + confirmationValue}
               />
             </Section>
           )}
-          <StyledConfirmationButton
+          <StyledCenteredButton
             onClick={onConfirmClick}
-            variant={ButtonVariant.Secondary}
+            variant="secondary"
+            accent="danger"
             title={deleteButtonText}
             disabled={!isValidValue}
             fullWidth
           />
           <StyledCenteredButton
             onClick={() => setIsOpen(false)}
-            variant={ButtonVariant.Secondary}
+            variant="secondary"
             title="Cancel"
             fullWidth
-            style={{
-              marginTop: 10,
-            }}
           />
         </StyledConfirmationModal>
       </LayoutGroup>
     </AnimatePresence>
   );
-}
+};

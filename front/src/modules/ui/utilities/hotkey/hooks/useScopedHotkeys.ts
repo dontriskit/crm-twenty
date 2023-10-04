@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { useHotkeys } from 'react-hotkeys-hook';
 import {
   HotkeyCallback,
@@ -11,7 +12,7 @@ import { pendingHotkeyState } from '../states/internal/pendingHotkeysState';
 
 import { useScopedHotkeyCallback } from './useScopedHotkeyCallback';
 
-export function useScopedHotkeys(
+export const useScopedHotkeys = (
   keys: Keys,
   callback: HotkeyCallback,
   scope: string,
@@ -21,7 +22,7 @@ export function useScopedHotkeys(
     enableOnFormTags: true,
     preventDefault: true,
   },
-) {
+) => {
   const [pendingHotkey, setPendingHotkey] = useRecoilState(pendingHotkeyState);
 
   const callScopedHotkeyCallback = useScopedHotkeyCallback();
@@ -49,4 +50,4 @@ export function useScopedHotkeys(
     },
     dependencies,
   );
-}
+};

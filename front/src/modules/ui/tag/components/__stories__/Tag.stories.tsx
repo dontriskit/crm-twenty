@@ -1,39 +1,65 @@
-import type { Meta, StoryObj } from '@storybook/react';
+import { expect } from '@storybook/jest';
+import { Meta, StoryObj } from '@storybook/react';
+import { userEvent } from '@storybook/testing-library';
 
+import { ThemeColor } from '@/ui/theme/constants/colors';
+import { CatalogDecorator } from '~/testing/decorators/CatalogDecorator';
 import { ComponentDecorator } from '~/testing/decorators/ComponentDecorator';
+import { CatalogStory } from '~/testing/types';
 
-import { Tag } from '../Tag';
+import { Tag, TagColor } from '../Tag';
 
 const meta: Meta<typeof Tag> = {
-  title: 'UI/Accessories/Tag',
+  title: 'UI/Tag/Tag',
   component: Tag,
-  decorators: [ComponentDecorator],
-  argTypes: { color: { control: false } },
-  args: { text: 'Urgent' },
 };
 
 export default meta;
 type Story = StoryObj<typeof Tag>;
 
-const TESTED_COLORS = [
-  'green',
-  'turquoise',
-  'sky',
-  'blue',
-  'purple',
-  'pink',
-  'red',
-  'orange',
-  'yellow',
-  'gray',
-];
+export const Default: Story = {
+  args: {
+    text: 'Urgent',
+    color: 'red',
+  },
+  argTypes: { onClick: { action: 'clicked' } },
+  decorators: [ComponentDecorator],
+  play: async ({ canvasElement, args }) => {
+    const tag = canvasElement.querySelector('h3');
 
-export const AllTags: Story = {
-  render: (args) => (
-    <>
-      {TESTED_COLORS.map((color) => (
-        <Tag {...args} color={color} />
-      ))}
-    </>
-  ),
+    if (!tag) throw new Error('Tag not found');
+
+    await userEvent.click(tag);
+    await expect(args.onClick).toHaveBeenCalled();
+  },
+};
+
+export const Catalog: CatalogStory<Story, typeof Tag> = {
+  args: { text: 'Urgent' },
+  argTypes: {
+    color: { control: false },
+  },
+  parameters: {
+    catalog: {
+      dimensions: [
+        {
+          name: 'colors',
+          values: [
+            'green',
+            'turquoise',
+            'sky',
+            'blue',
+            'purple',
+            'pink',
+            'red',
+            'orange',
+            'yellow',
+            'gray',
+          ] satisfies TagColor[],
+          props: (color: ThemeColor) => ({ color }),
+        },
+      ],
+    },
+  },
+  decorators: [CatalogDecorator],
 };

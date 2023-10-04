@@ -1,31 +1,32 @@
+import { useRecoilState } from 'recoil';
+
+import { LightIconButton } from '@/ui/button/components/LightIconButton';
 import {
   IconLayoutSidebarRightCollapse,
   IconLayoutSidebarRightExpand,
-} from '@tabler/icons-react';
-import { useRecoilState } from 'recoil';
+} from '@/ui/icon';
 
-import { IconButton } from '../../button/components/IconButton';
 import { isRightDrawerExpandedState } from '../states/isRightDrawerExpandedState';
 
-export function RightDrawerTopBarExpandButton() {
+export const RightDrawerTopBarExpandButton = () => {
   const [isRightDrawerExpanded, setIsRightDrawerExpanded] = useRecoilState(
     isRightDrawerExpandedState,
   );
 
-  function handleButtonClick() {
+  const handleButtonClick = () => {
     setIsRightDrawerExpanded(!isRightDrawerExpanded);
-  }
+  };
 
   return (
-    <IconButton
-      icon={
-        isRightDrawerExpanded ? (
-          <IconLayoutSidebarRightCollapse size={16} />
-        ) : (
-          <IconLayoutSidebarRightExpand size={16} />
-        )
+    <LightIconButton
+      size="medium"
+      accent="tertiary"
+      Icon={
+        isRightDrawerExpanded
+          ? IconLayoutSidebarRightCollapse
+          : IconLayoutSidebarRightExpand
       }
       onClick={handleButtonClick}
     />
   );
-}
+};

@@ -1,10 +1,12 @@
 import React from 'react';
+import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
+
+import { IconComponent } from '@/ui/icon/types/IconComponent';
 
 type Variant = 'primary' | 'secondary';
 
 type Props = {
-  icon?: React.ReactNode;
   title: string;
   fullWidth?: boolean;
   variant?: Variant;
@@ -20,11 +22,7 @@ const StyledButton = styled.button<Pick<Props, 'fullWidth' | 'variant'>>`
 
     switch (variant) {
       case 'primary':
-        return `radial-gradient(
-          50% 62.62% at 50% 0%,
-          ${theme.font.color.secondary} 0%,
-          ${theme.font.color.primary} 100%
-        )`;
+        return theme.background.radialGradient;
       case 'secondary':
         return theme.background.primary;
       default:
@@ -32,12 +30,19 @@ const StyledButton = styled.button<Pick<Props, 'fullWidth' | 'variant'>>`
     }
   }};
   border: 1px solid;
-  border-color: ${({ theme, disabled }) => {
+  border-color: ${({ theme, disabled, variant }) => {
     if (disabled) {
       return theme.background.transparent.lighter;
     }
 
-    return theme.border.color.light;
+    switch (variant) {
+      case 'primary':
+        return theme.background.transparent.light;
+      case 'secondary':
+        return theme.border.color.medium;
+      default:
+        return theme.background.primary;
+    }
   }};
   border-radius: ${({ theme }) => theme.border.radius.md};
   ${({ theme, disabled }) => {
@@ -54,7 +59,7 @@ const StyledButton = styled.button<Pick<Props, 'fullWidth' | 'variant'>>`
 
     switch (variant) {
       case 'primary':
-        return theme.font.color.inverted;
+        return theme.grayScale.gray0;
       case 'secondary':
         return theme.font.color.primary;
       default:
@@ -80,22 +85,32 @@ const StyledButton = styled.button<Pick<Props, 'fullWidth' | 'variant'>>`
           }
         `;
       default:
-        return '';
+        return `
+          &:hover {
+            background: ${theme.background.radialGradientHover}};
+          }
+        `;
     }
   }};
 `;
 
-export function MainButton({
-  icon,
+type MainButtonProps = Props & {
+  Icon?: IconComponent;
+};
+
+export const MainButton = ({
+  Icon,
   title,
   fullWidth = false,
   variant = 'primary',
   ...props
-}: Props) {
+}: MainButtonProps) => {
+  const theme = useTheme();
   return (
+    // eslint-disable-next-line twenty/no-spread-props
     <StyledButton fullWidth={fullWidth} variant={variant} {...props}>
-      {icon}
+      {Icon && <Icon size={theme.icon.size.sm} />}
       {title}
     </StyledButton>
   );
-}
+};

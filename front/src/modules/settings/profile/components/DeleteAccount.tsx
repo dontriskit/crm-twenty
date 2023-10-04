@@ -5,15 +5,12 @@ import { useRecoilValue } from 'recoil';
 import { useAuth } from '@/auth/hooks/useAuth';
 import { currentUserState } from '@/auth/states/currentUserState';
 import { AppPath } from '@/types/AppPath';
-import { ButtonVariant } from '@/ui/button/components/Button';
-import {
-  ConfirmationModal,
-  StyledConfirmationButton,
-} from '@/ui/modal/components/ConfirmationModal';
+import { Button } from '@/ui/button/components/Button';
+import { ConfirmationModal } from '@/ui/modal/components/ConfirmationModal';
 import { H2Title } from '@/ui/typography/components/H2Title';
 import { useDeleteUserAccountMutation } from '~/generated/graphql';
 
-export function DeleteAccount() {
+export const DeleteAccount = () => {
   const [isDeleteAccountModalOpen, setIsDeleteAccountModalOpen] =
     useState(false);
 
@@ -40,9 +37,10 @@ export function DeleteAccount() {
         description="Delete account and all the associated data"
       />
 
-      <StyledConfirmationButton
+      <Button
+        accent="danger"
         onClick={() => setIsDeleteAccountModalOpen(true)}
-        variant={ButtonVariant.Secondary}
+        variant="secondary"
         title="Delete account"
       />
 
@@ -63,4 +61,4 @@ export function DeleteAccount() {
       />
     </>
   );
-}
+};

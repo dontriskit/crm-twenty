@@ -5,7 +5,7 @@ import { ActionBar } from '@/ui/action-bar/components/ActionBar';
 
 import { selectedCardIdsSelector } from '../states/selectors/selectedCardIdsSelector';
 
-export function EntityBoardActionBar() {
-  const selectedBoardCards = useRecoilValue(selectedCardIdsSelector);
-  return <ActionBar selectedIds={selectedBoardCards}></ActionBar>;
-}
+export const EntityBoardActionBar = () => {
+  const selectedCardIds = useRecoilValue(selectedCardIdsSelector);
+  return <ActionBar selectedIds={selectedCardIds}></ActionBar>;
+};
